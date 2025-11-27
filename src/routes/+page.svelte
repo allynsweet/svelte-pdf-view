@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { PdfViewer, PdfToolbar, PdfRenderer } from '$lib/index.js';
 
-	let pdfUrl = $state('https://texpile.com/pdf/Texpile_TOS.pdf');
+	let pdfUrl = $state('/Demo.pdf');
 </script>
 
 <div class="demo">
