@@ -1,3 +1,60 @@
-<h1>Welcome to your library project</h1>
-<p>Create your package using @sveltejs/package and preview/showcase your work with SvelteKit</p>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script lang="ts">
+	import PdfViewer from "$lib/PdfViewer.svelte";
+
+
+	let pdfUrl = $state('https://texpile.com/pdf/Texpile_TOS.pdf');
+</script>
+
+<div class="demo">
+	<h1>PDF Viewer Demo</h1>
+	
+	<div class="url-input">
+		<label for="pdf-url">PDF URL:</label>
+		<input 
+			id="pdf-url" 
+			type="text" 
+			bind:value={pdfUrl} 
+			placeholder="Enter PDF URL..."
+		/>
+	</div>
+
+	<div class="viewer-container">
+		<PdfViewer src={pdfUrl} />
+	</div>
+</div>
+
+<style>
+	.demo {
+		display: flex;
+		flex-direction: column;
+		height: 100vh;
+		padding: 1rem;
+		box-sizing: border-box;
+	}
+
+	h1 {
+		margin: 0 0 1rem 0;
+	}
+
+	.url-input {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.url-input input {
+		flex: 1;
+		padding: 0.5rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+
+	.viewer-container {
+		flex: 1;
+		min-height: 0;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		overflow: hidden;
+	}
+</style>

@@ -62,5 +62,8 @@
 	},
 	"keywords": [
 		"svelte"
-	]
+	],
+	"dependencies": {
+		"pdfjs-dist": "^5.4.394"
+	}
 }
