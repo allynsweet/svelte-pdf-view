@@ -11,6 +11,9 @@ importers:
       '@lucide/svelte':
         specifier: '>=0.500.0'
         version: 0.555.0(svelte@5.45.2)
+      esm-env:
+        specifier: ^1.2.2
+        version: 1.2.2
       pdfjs-dist:
         specifier: ^5.4.394
         version: 5.4.394

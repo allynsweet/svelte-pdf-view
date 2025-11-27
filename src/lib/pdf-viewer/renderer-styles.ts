@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-/*
+/**
  * PDF Renderer Styles - Shadow DOM Isolated
  * This is a derivative work based on PDF.js text_layer_builder.css
  */
-
+export const rendererStyles = `
 /* CSS Custom Properties with defaults */
 .pdf-renderer-container {
 	--pdf-background-color: #e8e8e8;
@@ -201,3 +201,4 @@
 .textLayer .highlight.middle {
 	border-radius: 0;
 }
+`;

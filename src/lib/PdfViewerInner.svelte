@@ -1,7 +1,6 @@
 <script lang="ts">
+	import { BROWSER } from 'esm-env';
 	import { onDestroy, onMount } from 'svelte';
-
-	const browser = typeof window !== 'undefined';
 	import {
 		ZoomIn,
 		ZoomOut,
@@ -46,17 +45,23 @@
 	let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
 
 	async function initPdfJs() {
-		if (!browser) return null;
+		if (!BROWSER) return null;
 
 		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-		const pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url');
-		pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
+
+		// Create worker using import.meta.url
+		const worker = new pdfjsLib.PDFWorker({
+			port: new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
+				type: 'module'
+			}) as unknown as null
+		});
+		pdfjsLib.GlobalWorkerOptions.workerPort = worker.port;
 
 		return pdfjsLib;
 	}
 
 	async function loadPdf(url: string) {
-		if (!browser || !scrollContainerEl) return;
+		if (!BROWSER || !scrollContainerEl) return;
 
 		loading = true;
 		error = null;
@@ -203,7 +208,7 @@
 
 	// Load PDF when src changes
 	$effect(() => {
-		if (browser && src && scrollContainerEl && mounted) {
+		if (BROWSER && src && scrollContainerEl && mounted) {
 			loadPdf(src);
 		}
 	});

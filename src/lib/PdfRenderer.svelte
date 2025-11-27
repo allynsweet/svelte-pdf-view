@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { BROWSER } from 'esm-env';
 	import { onDestroy, onMount } from 'svelte';
-
-	const browser = typeof window !== 'undefined';
-	import { getPdfViewerContext, type PdfViewerActions } from './pdf-viewer/context.js';
-	import rendererStyles from './pdf-viewer/renderer-styles.css?raw';
+	import {
+		getPdfViewerContext,
+		getPdfWorkerContext,
+		type PdfViewerActions
+	} from './pdf-viewer/context.js';
+	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
 
 	/** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
 	export type PdfSource = string | ArrayBuffer | Uint8Array | Blob;
@@ -42,23 +45,37 @@
 	let scrollContainerEl: HTMLDivElement | null = null;
 	let mounted = $state(false);
 
+	// Get worker from context (if set via initPdfWorker)
+	const workerContext = getPdfWorkerContext();
+
 	// Core instances
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
 	let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
 
 	async function initPdfJs() {
-		if (!browser) return null;
+		if (!BROWSER) return null;
 
 		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-		const pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url');
-		pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
+
+		// Use worker from context if available, otherwise create inline worker
+		if (workerContext?.worker) {
+			// Worker was set up via initPdfWorker()
+		} else {
+			// Fallback: create worker using import.meta.url
+			const worker = new pdfjsLib.PDFWorker({
+				port: new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
+					type: 'module'
+				}) as unknown as null
+			});
+			pdfjsLib.GlobalWorkerOptions.workerPort = worker.port;
+		}
 
 		return pdfjsLib;
 	}
 
 	async function loadPdf(source: PdfSource) {
-		if (!browser || !scrollContainerEl) return;
+		if (!BROWSER || !scrollContainerEl) return;
 
 		viewerState.loading = true;
 		viewerState.error = null;
@@ -176,7 +193,7 @@
 	};
 
 	onMount(async () => {
-		if (browser && hostEl) {
+		if (BROWSER && hostEl) {
 			// Create shadow root for style isolation
 			shadowRoot = hostEl.attachShadow({ mode: 'open' });
 
@@ -212,7 +229,7 @@
 
 	// Load PDF when src changes
 	$effect(() => {
-		if (browser && src && scrollContainerEl && mounted) {
+		if (BROWSER && src && scrollContainerEl && mounted) {
 			loadPdf(src);
 		}
 	});
