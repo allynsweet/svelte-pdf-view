@@ -32,6 +32,22 @@ If you want to use the default `<PdfToolbar>` component, also install:
 npm install @lucide/svelte
 ```
 
+### Vite Configuration
+
+If you're using Vite (including SvelteKit), you may need to exclude `pdfjs-dist` from dependency optimization to ensure the PDF.js worker loads correctly:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+	// ... other config
+	optimizeDeps: {
+		exclude: ['pdfjs-dist']
+	}
+});
+```
+
+This is especially important in monorepo setups where Vite's optimizer may incorrectly bundle the worker.
+
 ## Quick Start
 
 ### Basic Usage

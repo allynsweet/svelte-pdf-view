@@ -18,8 +18,17 @@
  * This is a derivative work based on PDF.js pdf_page_view.js
  */
 import type { PDFPageProxy, PageViewport, TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { setLayerDimensions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { EventBus } from './EventBus.js';
+
+// Dynamically loaded pdfjs utilities
+let setLayerDimensions: typeof import('pdfjs-dist/legacy/build/pdf.mjs').setLayerDimensions;
+
+async function ensurePdfJsLoaded() {
+	if (!setLayerDimensions) {
+		const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+		setLayerDimensions = pdfjs.setLayerDimensions;
+	}
+}
 
 export interface PDFPageViewOptions {
 	container: HTMLElement;
@@ -91,7 +100,7 @@ export class PDFPageView {
 		this.div.appendChild(this.loadingDiv);
 	}
 
-	private setDimensions(): void {
+	private async setDimensions(): Promise<void> {
 		const { width, height } = this.viewport;
 		this.div.style.width = `${Math.floor(width)}px`;
 		this.div.style.height = `${Math.floor(height)}px`;
@@ -108,6 +117,7 @@ export class PDFPageView {
 		// mustFlip=false because the text layer uses raw page coordinates
 		// and rotation is handled via CSS transforms
 		if (this.textLayerDiv) {
+			await ensurePdfJsLoaded();
 			setLayerDimensions(this.textLayerDiv, this.viewport, /* mustFlip */ false);
 		}
 	}
@@ -284,7 +294,10 @@ export class PDFPageView {
 
 		try {
 			// Import TextLayer from pdfjs-dist
-			const { TextLayer } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+			const [{ TextLayer }] = await Promise.all([
+				import('pdfjs-dist/legacy/build/pdf.mjs'),
+				ensurePdfJsLoaded()
+			]);
 
 			const textContent = await this.pdfPage.getTextContent();
 
@@ -294,7 +307,7 @@ export class PDFPageView {
 			// Set text layer dimensions using PDF.js utility
 			// mustFlip=false because text layer uses raw page coordinates
 			// and rotation is handled via CSS transforms
-			setLayerDimensions(this.textLayerDiv, this.viewport, /* mustFlip */ false);
+			setLayerDimensions(this.textLayerDiv!, this.viewport, /* mustFlip */ false);
 
 			// Use PDF.js TextLayer for proper positioning
 			this.textLayer = new TextLayer({
