@@ -4,8 +4,12 @@
 	import { getPdfViewerContext, type PdfViewerActions } from './pdf-viewer/context.js';
 	import rendererStyles from './pdf-viewer/renderer-styles.css?raw';
 
+	/** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
+	export type PdfSource = string | ArrayBuffer | Uint8Array | Blob;
+
 	interface Props {
-		src: string;
+		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob */
+		src: PdfSource;
 		/** Background color of the scroll container */
 		backgroundColor?: string;
 		/** Page shadow style */
@@ -52,7 +56,7 @@
 		return pdfjsLib;
 	}
 
-	async function loadPdf(url: string) {
+	async function loadPdf(source: PdfSource) {
 		if (!browser || !scrollContainerEl) return;
 
 		viewerState.loading = true;
@@ -105,7 +109,25 @@
 				viewerState.searchTotal = matchesCount.total;
 			});
 
-			const loadingTask = pdfjs.getDocument(url);
+			// Handle different source types
+			let documentSource: string | { data: ArrayBuffer } | { data: Uint8Array };
+
+			if (typeof source === 'string') {
+				// URL string
+				documentSource = source;
+			} else if (source instanceof Blob) {
+				// Convert Blob to ArrayBuffer
+				const arrayBuffer = await source.arrayBuffer();
+				documentSource = { data: arrayBuffer };
+			} else if (source instanceof ArrayBuffer) {
+				documentSource = { data: source };
+			} else if (source instanceof Uint8Array) {
+				documentSource = { data: source };
+			} else {
+				throw new Error('Invalid PDF source type');
+			}
+
+			const loadingTask = pdfjs.getDocument(documentSource);
 			const pdfDocument = await loadingTask.promise;
 
 			await newViewer.setDocument(pdfDocument);

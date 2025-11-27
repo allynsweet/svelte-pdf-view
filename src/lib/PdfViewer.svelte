@@ -7,10 +7,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { setPdfViewerContext, type PdfViewerState, type PdfViewerActions } from './pdf-viewer/context.js';
+	import type { PdfSource } from './PdfRenderer.svelte';
 
 	interface Props {
-		/** URL or path to the PDF file */
-		src: string;
+		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob */
+		src: PdfSource;
 		/** Initial scale (default: 1.0) */
 		scale?: number;
 		/** CSS class for the container */
