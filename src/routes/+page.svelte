@@ -1,7 +1,13 @@
 <script lang="ts">
+	import { assets } from '$app/paths';
 	import { PdfViewer, PdfToolbar, PdfRenderer } from '$lib/index.js';
 
-	let pdfUrl = $state('/Demo.pdf');
+	const defaultPdf = `${assets}/Demo.pdf`;
+	let pdfUrl = $state(defaultPdf);
+
+	function resetToDefault() {
+		pdfUrl = defaultPdf;
+	}
 </script>
 
 <div class="demo">
@@ -10,6 +16,7 @@
 	<div class="url-input">
 		<label for="pdf-url">PDF URL:</label>
 		<input id="pdf-url" type="text" bind:value={pdfUrl} placeholder="Enter PDF URL..." />
+		<button onclick={resetToDefault}>Reset</button>
 	</div>
 
 	<div class="viewer-container">
@@ -50,6 +57,18 @@
 		padding: 0.5rem;
 		border: 1px solid #ccc;
 		border-radius: 4px;
+	}
+
+	.url-input button {
+		padding: 0.5rem 1rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		background: #f5f5f5;
+		cursor: pointer;
+	}
+
+	.url-input button:hover {
+		background: #e5e5e5;
 	}
 
 	.viewer-container {
