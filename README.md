@@ -2,6 +2,8 @@
 
 A modern, modular PDF viewer component for Svelte 5. Built on top of [PDF.js](https://mozilla.github.io/pdf.js/), with full TypeScript support and Shadow DOM isolation.
 
+**[Live Demo](https://nullpointerexceptionkek.github.io/svelte-pdf-view/)**
+
 ## Features
 
 - **PDF Rendering** - High-quality PDF rendering powered by PDF.js
