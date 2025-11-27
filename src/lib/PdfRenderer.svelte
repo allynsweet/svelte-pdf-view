@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { BROWSER } from 'esm-env';
 	import { onDestroy, onMount } from 'svelte';
-	import {
-		getPdfViewerContext,
-		getPdfWorkerContext,
-		type PdfViewerActions
-	} from './pdf-viewer/context.js';
+	import { getPdfViewerContext, type PdfViewerActions } from './pdf-viewer/context.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
 
 	/** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
@@ -45,9 +41,6 @@
 	let scrollContainerEl: HTMLDivElement | null = null;
 	let mounted = $state(false);
 
-	// Get worker from context (if set via initPdfWorker)
-	const workerContext = getPdfWorkerContext();
-
 	// Core instances
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
@@ -58,18 +51,13 @@
 
 		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-		// Use worker from context if available, otherwise create inline worker
-		if (workerContext?.worker) {
-			// Worker was set up via initPdfWorker()
-		} else {
-			// Fallback: create worker using import.meta.url
-			const worker = new pdfjsLib.PDFWorker({
-				port: new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
-					type: 'module'
-				}) as unknown as null
-			});
-			pdfjsLib.GlobalWorkerOptions.workerPort = worker.port;
-		}
+		// Create worker using import.meta.url for proper bundler resolution
+		const worker = new pdfjsLib.PDFWorker({
+			port: new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
+				type: 'module'
+			}) as unknown as null
+		});
+		pdfjsLib.GlobalWorkerOptions.workerPort = worker.port;
 
 		return pdfjsLib;
 	}

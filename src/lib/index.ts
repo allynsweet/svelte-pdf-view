@@ -11,7 +11,6 @@ export type { PdfSource } from './PdfRenderer.svelte';
 // Export context for custom toolbars
 export {
 	getPdfViewerContext,
-	initPdfWorker,
 	type PdfViewerState,
 	type PdfViewerActions,
 	type PdfViewerContext
