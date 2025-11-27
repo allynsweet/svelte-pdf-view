@@ -24,6 +24,12 @@ pnpm add svelte-pdf-view
 yarn add svelte-pdf-view
 ```
 
+If you want to use the default `<PdfToolbar>` component, also install:
+
+```bash
+npm install @lucide/svelte
+```
+
 ## Quick Start
 
 ### Basic Usage
