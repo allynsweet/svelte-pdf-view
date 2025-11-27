@@ -13,14 +13,16 @@
 	</div>
 
 	<div class="viewer-container">
-		<!-- Option 1: Use default layout -->
-		<!-- <PdfViewer src={pdfUrl} /> -->
-
-		<!-- Option 2: Modular layout with compound components -->
 		<PdfViewer src={pdfUrl}>
 			<PdfToolbar />
-			<PdfRenderer src={pdfUrl} />
+			<PdfRenderer
+				src={pdfUrl}
+				backgroundColor="#e8e8e8"
+				scrollbarThumbColor="#c1c1c1"
+				scrollbarTrackColor="#f1f1f1"
+			/>
 		</PdfViewer>
+		
 	</div>
 </div>
 

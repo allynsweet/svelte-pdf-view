@@ -1,11 +1,19 @@
 /* PDF Renderer Styles - Shadow DOM Isolated */
 
+/* CSS Custom Properties with defaults */
 .pdf-renderer-container {
+	--pdf-background-color: #e8e8e8;
+	--pdf-page-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+	--pdf-scrollbar-track-color: #f1f1f1;
+	--pdf-scrollbar-thumb-color: #c1c1c1;
+	--pdf-scrollbar-thumb-hover-color: #a1a1a1;
+	--pdf-scrollbar-width: 10px;
+
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 	height: 100%;
-	background-color: #e8e8e8;
+	background-color: var(--pdf-background-color);
 	overflow: hidden;
 }
 
@@ -14,6 +22,33 @@
 	flex: 1;
 	overflow: auto;
 	position: relative;
+	background-color: var(--pdf-background-color);
+}
+
+/* Custom scrollbar styling */
+.pdf-scroll-container::-webkit-scrollbar {
+	width: var(--pdf-scrollbar-width);
+	height: var(--pdf-scrollbar-width);
+}
+
+.pdf-scroll-container::-webkit-scrollbar-track {
+	background: var(--pdf-scrollbar-track-color);
+	border-radius: calc(var(--pdf-scrollbar-width) / 2);
+}
+
+.pdf-scroll-container::-webkit-scrollbar-thumb {
+	background: var(--pdf-scrollbar-thumb-color);
+	border-radius: calc(var(--pdf-scrollbar-width) / 2);
+}
+
+.pdf-scroll-container::-webkit-scrollbar-thumb:hover {
+	background: var(--pdf-scrollbar-thumb-hover-color);
+}
+
+/* Firefox scrollbar */
+.pdf-scroll-container {
+	scrollbar-width: thin;
+	scrollbar-color: var(--pdf-scrollbar-thumb-color) var(--pdf-scrollbar-track-color);
 }
 
 /* Viewer - dynamically created */
@@ -34,7 +69,7 @@
 
 	position: relative;
 	background-color: white;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--pdf-page-shadow);
 	border-radius: 2px;
 	margin: 0;
 	direction: ltr;

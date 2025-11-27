@@ -6,9 +6,29 @@
 
 	interface Props {
 		src: string;
+		/** Background color of the scroll container */
+		backgroundColor?: string;
+		/** Page shadow style */
+		pageShadow?: string;
+		/** Scrollbar track color */
+		scrollbarTrackColor?: string;
+		/** Scrollbar thumb color */
+		scrollbarThumbColor?: string;
+		/** Scrollbar thumb hover color */
+		scrollbarThumbHoverColor?: string;
+		/** Scrollbar width */
+		scrollbarWidth?: string;
 	}
 
-	let { src }: Props = $props();
+	let {
+		src,
+		backgroundColor = '#e8e8e8',
+		pageShadow = '0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08)',
+		scrollbarTrackColor = '#f1f1f1',
+		scrollbarThumbColor = '#c1c1c1',
+		scrollbarThumbHoverColor = '#a1a1a1',
+		scrollbarWidth = '10px'
+	}: Props = $props();
 
 	const { state: viewerState, _registerRenderer } = getPdfViewerContext();
 
@@ -145,6 +165,14 @@
 			// Create container structure inside shadow DOM
 			const container = document.createElement('div');
 			container.className = 'pdf-renderer-container';
+
+			// Apply CSS custom properties for customization
+			container.style.setProperty('--pdf-background-color', backgroundColor);
+			container.style.setProperty('--pdf-page-shadow', pageShadow);
+			container.style.setProperty('--pdf-scrollbar-track-color', scrollbarTrackColor);
+			container.style.setProperty('--pdf-scrollbar-thumb-color', scrollbarThumbColor);
+			container.style.setProperty('--pdf-scrollbar-thumb-hover-color', scrollbarThumbHoverColor);
+			container.style.setProperty('--pdf-scrollbar-width', scrollbarWidth);
 
 			scrollContainerEl = document.createElement('div');
 			scrollContainerEl.className = 'pdf-scroll-container';
