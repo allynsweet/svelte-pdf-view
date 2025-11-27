@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@lucide/svelte':
-        specifier: ^0.555.0
+        specifier: '>=0.500.0'
         version: 0.555.0(svelte@5.45.2)
       pdfjs-dist:
         specifier: ^5.4.394
