@@ -22,7 +22,7 @@ export const RenderingStates = {
 	FINISHED: 3
 } as const;
 
-export type RenderingState = typeof RenderingStates[keyof typeof RenderingStates];
+export type RenderingState = (typeof RenderingStates)[keyof typeof RenderingStates];
 
 export class PDFPageView {
 	readonly id: number;
@@ -80,15 +80,15 @@ export class PDFPageView {
 		const { width, height } = this.viewport;
 		this.div.style.width = `${Math.floor(width)}px`;
 		this.div.style.height = `${Math.floor(height)}px`;
-		
+
 		// Set CSS variables for text layer scaling
 		// viewport.scale already includes our scale factor
 		this.div.style.setProperty('--scale-factor', String(this.viewport.scale));
-		
+
 		// Set rotation attribute for text layer
 		const totalRotation = (this.rotation + this.pdfPageRotate) % 360;
 		this.div.setAttribute('data-main-rotation', String(totalRotation));
-		
+
 		// Update text layer dimensions if it exists
 		// mustFlip=false because the text layer uses raw page coordinates
 		// and rotation is handled via CSS transforms

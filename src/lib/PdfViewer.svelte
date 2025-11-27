@@ -242,8 +242,12 @@
 
 			<!-- Rotation controls -->
 			<div class="pdf-toolbar-group">
-				<button onclick={handleRotateLeft} aria-label="Rotate counter-clockwise" title="Rotate Left">↺</button>
-				<button onclick={handleRotateRight} aria-label="Rotate clockwise" title="Rotate Right">↻</button>
+				<button onclick={handleRotateLeft} aria-label="Rotate counter-clockwise" title="Rotate Left"
+					>↺</button
+				>
+				<button onclick={handleRotateRight} aria-label="Rotate clockwise" title="Rotate Right"
+					>↻</button
+				>
 			</div>
 
 			<!-- Search -->
@@ -260,7 +264,8 @@
 					🔍
 				</button>
 				{#if searchTotal > 0}
-					<button onclick={handleSearchPrev} aria-label="Previous match" title="Previous">◀</button>
+					<button onclick={handleSearchPrev} aria-label="Previous match" title="Previous">◀</button
+					>
 					<button onclick={handleSearchNext} aria-label="Next match" title="Next">▶</button>
 					<span class="match-info">{searchCurrent}/{searchTotal}</span>
 				{/if}
@@ -273,240 +278,240 @@
 </div>
 
 <style>
-/* Container */
-.pdf-viewer-container {
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-	height: 100%;
-	background-color: #525659;
-	overflow: hidden;
-}
+	/* Container */
+	.pdf-viewer-container {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		height: 100%;
+		background-color: #525659;
+		overflow: hidden;
+	}
 
-/* Toolbar */
-:global(.pdf-toolbar) {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	gap: 1rem;
-	padding: 0.5rem 1rem;
-	background-color: #323639;
-	color: white;
-	flex-shrink: 0;
-	flex-wrap: wrap;
-}
+	/* Toolbar */
+	:global(.pdf-toolbar) {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.5rem 1rem;
+		background-color: #323639;
+		color: white;
+		flex-shrink: 0;
+		flex-wrap: wrap;
+	}
 
-:global(.pdf-toolbar-group) {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
+	:global(.pdf-toolbar-group) {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
 
-:global(.pdf-toolbar button) {
-	padding: 0.4rem 0.75rem;
-	border: none;
-	background-color: #4a4d50;
-	color: white;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 0.9rem;
-	transition: background-color 0.2s;
-	min-width: 36px;
-}
+	:global(.pdf-toolbar button) {
+		padding: 0.4rem 0.75rem;
+		border: none;
+		background-color: #4a4d50;
+		color: white;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 0.9rem;
+		transition: background-color 0.2s;
+		min-width: 36px;
+	}
 
-:global(.pdf-toolbar button:hover:not(:disabled)) {
-	background-color: #5a5d60;
-}
+	:global(.pdf-toolbar button:hover:not(:disabled)) {
+		background-color: #5a5d60;
+	}
 
-:global(.pdf-toolbar button:disabled) {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
+	:global(.pdf-toolbar button:disabled) {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
 
-:global(.pdf-toolbar input[type="text"]),
-:global(.pdf-toolbar input[type="number"]) {
-	padding: 0.4rem 0.5rem;
-	border: 1px solid #4a4d50;
-	border-radius: 4px;
-	background-color: #4a4d50;
-	color: white;
-	font-size: 0.9rem;
-}
+	:global(.pdf-toolbar input[type='text']),
+	:global(.pdf-toolbar input[type='number']) {
+		padding: 0.4rem 0.5rem;
+		border: 1px solid #4a4d50;
+		border-radius: 4px;
+		background-color: #4a4d50;
+		color: white;
+		font-size: 0.9rem;
+	}
 
-:global(.pdf-toolbar input[type="number"]) {
-	width: 50px;
-	text-align: center;
-}
+	:global(.pdf-toolbar input[type='number']) {
+		width: 50px;
+		text-align: center;
+	}
 
-:global(.pdf-toolbar .search-input) {
-	width: 150px;
-}
+	:global(.pdf-toolbar .search-input) {
+		width: 150px;
+	}
 
-:global(.pdf-toolbar .zoom-level) {
-	min-width: 50px;
-	text-align: center;
-	font-size: 0.85rem;
-}
+	:global(.pdf-toolbar .zoom-level) {
+		min-width: 50px;
+		text-align: center;
+		font-size: 0.85rem;
+	}
 
-:global(.pdf-toolbar .page-info) {
-	font-size: 0.85rem;
-}
+	:global(.pdf-toolbar .page-info) {
+		font-size: 0.85rem;
+	}
 
-:global(.pdf-toolbar .match-info) {
-	font-size: 0.8rem;
-	color: #aaa;
-	min-width: 80px;
-}
+	:global(.pdf-toolbar .match-info) {
+		font-size: 0.8rem;
+		color: #aaa;
+		min-width: 80px;
+	}
 
-/* Scroll container */
-.pdf-scroll-container {
-	flex: 1;
-	overflow: auto;
-	position: relative;
-}
+	/* Scroll container */
+	.pdf-scroll-container {
+		flex: 1;
+		overflow: auto;
+		position: relative;
+	}
 
-/* Viewer - dynamically created */
-:global(.pdfViewer) {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	padding: 10px;
-	gap: 10px;
-}
+	/* Viewer - dynamically created */
+	:global(.pdfViewer) {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 10px;
+		gap: 10px;
+	}
 
-/* Page - dynamically created with CSS variables for text layer */
-:global(.page) {
-	--user-unit: 1;
-	--total-scale-factor: calc(var(--scale-factor, 1) * var(--user-unit));
-	--scale-round-x: 1px;
-	--scale-round-y: 1px;
+	/* Page - dynamically created with CSS variables for text layer */
+	:global(.page) {
+		--user-unit: 1;
+		--total-scale-factor: calc(var(--scale-factor, 1) * var(--user-unit));
+		--scale-round-x: 1px;
+		--scale-round-y: 1px;
 
-	position: relative;
-	background-color: white;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-	margin: 0;
-	direction: ltr;
-}
+		position: relative;
+		background-color: white;
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+		margin: 0;
+		direction: ltr;
+	}
 
-:global(.page .loadingIcon) {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	color: #666;
-	font-size: 14px;
-}
+	:global(.page .loadingIcon) {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		color: #666;
+		font-size: 14px;
+	}
 
-:global(.page .canvasWrapper) {
-	position: absolute;
-	inset: 0;
-	overflow: hidden;
-	z-index: 0;
-}
+	:global(.page .canvasWrapper) {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		z-index: 0;
+	}
 
-:global(.page .pdf-canvas) {
-	display: block;
-}
+	:global(.page .pdf-canvas) {
+		display: block;
+	}
 
-/* Text layer - essential styles from PDF.js */
-:global(.textLayer) {
-	position: absolute;
-	text-align: initial;
-	inset: 0;
-	overflow: clip;
-	opacity: 1;
-	line-height: 1;
-	-webkit-text-size-adjust: none;
-	-moz-text-size-adjust: none;
-	text-size-adjust: none;
-	forced-color-adjust: none;
-	transform-origin: 0 0;
-	caret-color: CanvasText;
-	z-index: 2;
-}
+	/* Text layer - essential styles from PDF.js */
+	:global(.textLayer) {
+		position: absolute;
+		text-align: initial;
+		inset: 0;
+		overflow: clip;
+		opacity: 1;
+		line-height: 1;
+		-webkit-text-size-adjust: none;
+		-moz-text-size-adjust: none;
+		text-size-adjust: none;
+		forced-color-adjust: none;
+		transform-origin: 0 0;
+		caret-color: CanvasText;
+		z-index: 2;
+	}
 
-/* Text layer rotation transforms - text is rendered in raw page coordinates,
+	/* Text layer rotation transforms - text is rendered in raw page coordinates,
    then rotated via CSS to match the canvas orientation */
-:global(.textLayer[data-main-rotation="90"]) {
-	transform: rotate(90deg) translateY(-100%);
-}
+	:global(.textLayer[data-main-rotation='90']) {
+		transform: rotate(90deg) translateY(-100%);
+	}
 
-:global(.textLayer[data-main-rotation="180"]) {
-	transform: rotate(180deg) translate(-100%, -100%);
-}
+	:global(.textLayer[data-main-rotation='180']) {
+		transform: rotate(180deg) translate(-100%, -100%);
+	}
 
-:global(.textLayer[data-main-rotation="270"]) {
-	transform: rotate(270deg) translateX(-100%);
-}
+	:global(.textLayer[data-main-rotation='270']) {
+		transform: rotate(270deg) translateX(-100%);
+	}
 
-:global(.textLayer :is(span, br)) {
-	color: transparent;
-	position: absolute;
-	white-space: pre;
-	cursor: text;
-	transform-origin: 0% 0%;
-}
+	:global(.textLayer :is(span, br)) {
+		color: transparent;
+		position: absolute;
+		white-space: pre;
+		cursor: text;
+		transform-origin: 0% 0%;
+	}
 
-:global(.textLayer > :not(.markedContent)),
-:global(.textLayer .markedContent span:not(.markedContent)) {
-	z-index: 1;
-}
+	:global(.textLayer > :not(.markedContent)),
+	:global(.textLayer .markedContent span:not(.markedContent)) {
+		z-index: 1;
+	}
 
-:global(.textLayer span.markedContent) {
-	top: 0;
-	height: 0;
-}
+	:global(.textLayer span.markedContent) {
+		top: 0;
+		height: 0;
+	}
 
-:global(.textLayer ::-moz-selection) {
-	background: rgba(0, 0, 255, 0.25);
-}
+	:global(.textLayer ::-moz-selection) {
+		background: rgba(0, 0, 255, 0.25);
+	}
 
-:global(.textLayer ::selection) {
-	background: rgba(0, 0, 255, 0.25);
-}
+	:global(.textLayer ::selection) {
+		background: rgba(0, 0, 255, 0.25);
+	}
 
-:global(.textLayer br::-moz-selection),
-:global(.textLayer br::selection) {
-	background: transparent;
-}
+	:global(.textLayer br::-moz-selection),
+	:global(.textLayer br::selection) {
+		background: transparent;
+	}
 
-/* Search highlights */
-:global(.textLayer .highlight) {
-	margin: -1px;
-	padding: 1px;
-	background-color: rgba(255, 255, 0, 0.4);
-	border-radius: 4px;
-}
+	/* Search highlights */
+	:global(.textLayer .highlight) {
+		margin: -1px;
+		padding: 1px;
+		background-color: rgba(255, 255, 0, 0.4);
+		border-radius: 4px;
+	}
 
-:global(.textLayer .highlight.selected) {
-	background-color: rgba(255, 128, 0, 0.6);
-}
+	:global(.textLayer .highlight.selected) {
+		background-color: rgba(255, 128, 0, 0.6);
+	}
 
-:global(.textLayer .highlight.begin) {
-	border-radius: 4px 0 0 4px;
-}
+	:global(.textLayer .highlight.begin) {
+		border-radius: 4px 0 0 4px;
+	}
 
-:global(.textLayer .highlight.end) {
-	border-radius: 0 4px 4px 0;
-}
+	:global(.textLayer .highlight.end) {
+		border-radius: 0 4px 4px 0;
+	}
 
-:global(.textLayer .highlight.middle) {
-	border-radius: 0;
-}
+	:global(.textLayer .highlight.middle) {
+		border-radius: 0;
+	}
 
-/* Loading state */
-.pdf-loading,
-.pdf-error {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 100%;
-	min-height: 200px;
-	color: white;
-	font-size: 1.25rem;
-}
+	/* Loading state */
+	.pdf-loading,
+	.pdf-error {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100%;
+		min-height: 200px;
+		color: white;
+		font-size: 1.25rem;
+	}
 
-.pdf-error {
-	color: #ff6b6b;
-}
+	.pdf-error {
+		color: #ff6b6b;
+	}
 </style>

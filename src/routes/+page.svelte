@@ -1,21 +1,15 @@
 <script lang="ts">
-	import PdfViewer from "$lib/PdfViewer.svelte";
-
+	import PdfViewer from '$lib/PdfViewer.svelte';
 
 	let pdfUrl = $state('https://texpile.com/pdf/Texpile_TOS.pdf');
 </script>
 
 <div class="demo">
 	<h1>PDF Viewer Demo</h1>
-	
+
 	<div class="url-input">
 		<label for="pdf-url">PDF URL:</label>
-		<input 
-			id="pdf-url" 
-			type="text" 
-			bind:value={pdfUrl} 
-			placeholder="Enter PDF URL..."
-		/>
+		<input id="pdf-url" type="text" bind:value={pdfUrl} placeholder="Enter PDF URL..." />
 	</div>
 
 	<div class="viewer-container">

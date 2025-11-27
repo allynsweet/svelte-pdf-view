@@ -79,7 +79,10 @@ export class PDFViewerCore {
 		// Create page views
 		for (let i = 1; i <= numPages; i++) {
 			const page = await pdfDocument.getPage(i);
-			const viewport = page.getViewport({ scale: this.currentScale, rotation: this.currentRotation });
+			const viewport = page.getViewport({
+				scale: this.currentScale,
+				rotation: this.currentRotation
+			});
 
 			const pageView = new PDFPageView({
 				container: this.viewer,

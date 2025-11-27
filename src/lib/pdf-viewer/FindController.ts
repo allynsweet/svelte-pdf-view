@@ -50,7 +50,13 @@ export class FindController {
 	}
 
 	async find(options: FindOptions): Promise<void> {
-		const { query, highlightAll = true, caseSensitive = false, entireWord = false, findPrevious = false } = options;
+		const {
+			query,
+			highlightAll = true,
+			caseSensitive = false,
+			entireWord = false,
+			findPrevious = false
+		} = options;
 
 		// Clear previous highlights
 		this.clearHighlights();
@@ -97,7 +103,10 @@ export class FindController {
 				// Check entire word if required
 				if (entireWord) {
 					const before = pos > 0 ? searchText[pos - 1] : ' ';
-					const after = pos + searchQuery.length < searchText.length ? searchText[pos + searchQuery.length] : ' ';
+					const after =
+						pos + searchQuery.length < searchText.length
+							? searchText[pos + searchQuery.length]
+							: ' ';
 					if (/\w/.test(before) || /\w/.test(after)) {
 						pos++;
 						continue;
@@ -179,7 +188,8 @@ export class FindController {
 	findPrevious(): void {
 		if (this.allMatches.length === 0) return;
 
-		this.selectedMatchIndex = (this.selectedMatchIndex - 1 + this.allMatches.length) % this.allMatches.length;
+		this.selectedMatchIndex =
+			(this.selectedMatchIndex - 1 + this.allMatches.length) % this.allMatches.length;
 		this.highlightMatches();
 		this.scrollToSelectedMatch();
 
