@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
+
+	const browser = typeof window !== 'undefined';
 	import {
 		ZoomIn,
 		ZoomOut,

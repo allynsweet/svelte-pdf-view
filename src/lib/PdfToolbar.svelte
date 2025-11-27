@@ -77,7 +77,11 @@
 		>
 			<RotateCcw size={18} />
 		</button>
-		<button onclick={() => actions.rotateClockwise()} aria-label="Rotate clockwise" title="Rotate Right">
+		<button
+			onclick={() => actions.rotateClockwise()}
+			aria-label="Rotate clockwise"
+			title="Rotate Right"
+		>
 			<RotateCw size={18} />
 		</button>
 	</div>
@@ -92,7 +96,12 @@
 			onkeydown={handleSearchKeydown}
 			aria-label="Search in document"
 		/>
-		<button onclick={handleSearch} disabled={viewerState.isSearching} aria-label="Search" title="Search">
+		<button
+			onclick={handleSearch}
+			disabled={viewerState.isSearching}
+			aria-label="Search"
+			title="Search"
+		>
 			<Search size={18} />
 		</button>
 		{#if viewerState.searchTotal > 0}
@@ -169,7 +178,9 @@
 		color: #333;
 		font-size: 0.8rem;
 		outline: none;
-		transition: border-color 0.15s, box-shadow 0.15s;
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s;
 	}
 
 	.pdf-toolbar input[type='text']:focus,

@@ -6,7 +6,11 @@
 
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { setPdfViewerContext, type PdfViewerState, type PdfViewerActions } from './pdf-viewer/context.js';
+	import {
+		setPdfViewerContext,
+		type PdfViewerState,
+		type PdfViewerActions
+	} from './pdf-viewer/context.js';
 	import type { PdfSource } from './PdfRenderer.svelte';
 
 	interface Props {
@@ -112,4 +116,3 @@
 		color: #dc3545;
 	}
 </style>
-

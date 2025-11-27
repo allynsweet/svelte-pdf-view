@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
+
+	const browser = typeof window !== 'undefined';
 	import { getPdfViewerContext, type PdfViewerActions } from './pdf-viewer/context.js';
 	import rendererStyles from './pdf-viewer/renderer-styles.css?raw';
 
@@ -146,7 +147,7 @@
 		zoomIn: () => viewer?.zoomIn(),
 		zoomOut: () => viewer?.zoomOut(),
 		setScale: (scale: number) => {
-			// TODO: Implement setScale in PDFViewerCore if needed
+			if (viewer) viewer.scale = scale;
 		},
 		rotateClockwise: () => viewer?.rotateClockwise(),
 		rotateCounterClockwise: () => viewer?.rotateCounterClockwise(),
