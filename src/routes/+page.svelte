@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { assets } from '$app/paths';
+	import { base } from '$app/paths';
 	import { PdfViewer, PdfToolbar, PdfRenderer } from '$lib/index.js';
 
-	const defaultPdf = `${assets}/Demo.pdf`;
+	const defaultPdf = `${base}/Demo.pdf`;
 	let pdfUrl = $state(defaultPdf);
 
 	function resetToDefault() {
