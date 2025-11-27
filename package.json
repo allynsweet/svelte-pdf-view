@@ -64,6 +64,7 @@
 		"svelte"
 	],
 	"dependencies": {
+		"@lucide/svelte": "^0.555.0",
 		"pdfjs-dist": "^5.4.394"
 	}
 }
