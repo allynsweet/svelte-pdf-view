@@ -19,11 +19,11 @@ A modern, modular PDF viewer component for Svelte 5. Built on top of [PDF.js](ht
 ## Installation
 
 ```bash
-npm install svelte-pdf-view
+npm install svelte-pdf-view pdfjs-dist
 # or
-pnpm add svelte-pdf-view
+pnpm add svelte-pdf-view pdfjs-dist
 # or
-yarn add svelte-pdf-view
+yarn add svelte-pdf-view pdfjs-dist
 ```
 
 If you want to use the default `<PdfToolbar>` component, also install:
