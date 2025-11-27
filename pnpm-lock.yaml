@@ -14,9 +14,6 @@ importers:
       esm-env:
         specifier: ^1.2.2
         version: 1.2.2
-      pdfjs-dist:
-        specifier: ^5.4.394
-        version: 5.4.394
     devDependencies:
       '@eslint/compat':
         specifier: ^1.4.0
@@ -54,6 +51,9 @@ importers:
       globals:
         specifier: ^16.5.0
         version: 16.5.0
+      pdfjs-dist:
+        specifier: ^5.4.394
+        version: 5.4.394
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
