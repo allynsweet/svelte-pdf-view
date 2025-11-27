@@ -1,8 +1,12 @@
+<script lang="ts" module>
+	// Export compound components
+	export { default as Toolbar } from './PdfToolbar.svelte';
+	export { default as Renderer } from './PdfRenderer.svelte';
+</script>
+
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { onDestroy, onMount } from 'svelte';
-	import { mount, unmount } from 'svelte';
-	import pdfViewerStyles from './pdf-viewer/styles.css?raw';
+	import type { Snippet } from 'svelte';
+	import { setPdfViewerContext, type PdfViewerState, type PdfViewerActions } from './pdf-viewer/context.js';
 
 	interface Props {
 		/** URL or path to the PDF file */
@@ -11,63 +15,100 @@
 		scale?: number;
 		/** CSS class for the container */
 		class?: string;
+		/** Children (toolbar and renderer) */
+		children?: Snippet;
 	}
 
-	let { src, scale: initialScale = 1.0, class: className = '' }: Props = $props();
+	let { src, scale: initialScale = 1.0, class: className = '', children }: Props = $props();
 
-	let hostEl: HTMLDivElement | undefined = $state();
-	let shadowRoot: ShadowRoot | null = null;
-	let innerComponent: Record<string, unknown> | null = null;
+	// Reactive state that will be shared via context
+	let state = $state<PdfViewerState>({
+		loading: true,
+		error: null,
+		totalPages: 0,
+		currentPage: 1,
+		scale: initialScale,
+		rotation: 0,
+		searchQuery: '',
+		searchCurrent: 0,
+		searchTotal: 0,
+		isSearching: false
+	});
 
-	onMount(async () => {
-		if (browser && hostEl) {
-			// Create shadow root
-			shadowRoot = hostEl.attachShadow({ mode: 'open' });
+	// Renderer actions - will be populated when renderer mounts
+	let rendererActions: PdfViewerActions | null = null;
 
-			// Inject styles into shadow DOM
-			const styleEl = document.createElement('style');
-			styleEl.textContent = pdfViewerStyles;
-			shadowRoot.appendChild(styleEl);
-
-			// Dynamically import and mount the inner component
-			const module = await import('./PdfViewerInner.svelte');
-			if (shadowRoot) {
-				innerComponent = mount(module.default, {
-					target: shadowRoot,
-					props: {
-						src,
-						scale: initialScale,
-						class: className
-					}
-				});
+	// Actions that proxy to the renderer
+	const actions: PdfViewerActions = {
+		zoomIn: () => rendererActions?.zoomIn(),
+		zoomOut: () => rendererActions?.zoomOut(),
+		setScale: (scale: number) => rendererActions?.setScale(scale),
+		rotateClockwise: () => rendererActions?.rotateClockwise(),
+		rotateCounterClockwise: () => rendererActions?.rotateCounterClockwise(),
+		goToPage: (page: number) => rendererActions?.goToPage(page),
+		search: async (query: string) => {
+			if (rendererActions) {
+				await rendererActions.search(query);
 			}
-		}
-	});
+		},
+		searchNext: () => rendererActions?.searchNext(),
+		searchPrevious: () => rendererActions?.searchPrevious(),
+		clearSearch: () => rendererActions?.clearSearch()
+	};
 
-	// Update src prop when it changes
-	$effect(() => {
-		if (innerComponent) {
-			// Svelte 5 mount returns a component instance with bound props
-			(innerComponent as unknown as { $set: (props: Record<string, unknown>) => void }).$set?.({
-				src
-			});
-		}
-	});
-
-	onDestroy(() => {
-		if (innerComponent) {
-			unmount(innerComponent);
-			innerComponent = null;
+	// Set up context
+	setPdfViewerContext({
+		state,
+		actions,
+		_registerRenderer: (renderer: PdfViewerActions) => {
+			rendererActions = renderer;
 		}
 	});
 </script>
 
-<div bind:this={hostEl} class="pdf-viewer-host {className}"></div>
+<div class="pdf-viewer-container {className}">
+	{#if state.loading}
+		<div class="pdf-loading">Loading PDF...</div>
+	{:else if state.error}
+		<div class="pdf-error">Error: {state.error}</div>
+	{/if}
+
+	{#if children}
+		{@render children()}
+	{:else}
+		<!-- Default layout if no children provided -->
+		{#await import('./PdfToolbar.svelte') then { default: Toolbar }}
+			<Toolbar />
+		{/await}
+		{#await import('./PdfRenderer.svelte') then { default: Renderer }}
+			<Renderer {src} />
+		{/await}
+	{/if}
+</div>
 
 <style>
-	.pdf-viewer-host {
-		display: block;
+	.pdf-viewer-container {
+		display: flex;
+		flex-direction: column;
 		width: 100%;
 		height: 100%;
+		background-color: #f0f0f0;
+		overflow: hidden;
+	}
+
+	.pdf-loading,
+	.pdf-error {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		color: #666;
+		font-size: 1rem;
+		z-index: 10;
+	}
+
+	.pdf-error {
+		color: #dc3545;
 	}
 </style>
+

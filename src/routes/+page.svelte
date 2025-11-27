@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PdfViewer from '$lib/PdfViewer.svelte';
+	import { PdfViewer, PdfToolbar, PdfRenderer } from '$lib/index.js';
 
 	let pdfUrl = $state('https://texpile.com/pdf/Texpile_TOS.pdf');
 </script>
@@ -13,7 +13,14 @@
 	</div>
 
 	<div class="viewer-container">
-		<PdfViewer src={pdfUrl} />
+		<!-- Option 1: Use default layout -->
+		<!-- <PdfViewer src={pdfUrl} /> -->
+
+		<!-- Option 2: Modular layout with compound components -->
+		<PdfViewer src={pdfUrl}>
+			<PdfToolbar />
+			<PdfRenderer src={pdfUrl} />
+		</PdfViewer>
 	</div>
 </div>
 
