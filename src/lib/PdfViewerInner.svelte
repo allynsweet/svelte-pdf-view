@@ -1,7 +1,15 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
-	import { ZoomIn, ZoomOut, RotateCcw, RotateCw, Search, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import {
+		ZoomIn,
+		ZoomOut,
+		RotateCcw,
+		RotateCw,
+		Search,
+		ChevronLeft,
+		ChevronRight
+	} from '@lucide/svelte';
 
 	interface Props {
 		/** URL or path to the PDF file */
@@ -107,6 +115,10 @@
 			const pdfDocument = await loadingTask.promise;
 
 			await newViewer.setDocument(pdfDocument);
+
+			// Set document on find controller for text extraction
+			findController.setDocument(pdfDocument);
+
 			viewer = newViewer;
 
 			loading = false;
@@ -235,14 +247,22 @@
 
 			<!-- Zoom controls -->
 			<div class="pdf-toolbar-group">
-				<button onclick={handleZoomOut} aria-label="Zoom out" title="Zoom Out"><ZoomOut size={18} /></button>
+				<button onclick={handleZoomOut} aria-label="Zoom out" title="Zoom Out"
+					><ZoomOut size={18} /></button
+				>
 				<span class="zoom-level">{Math.round(currentScale * 100)}%</span>
-				<button onclick={handleZoomIn} aria-label="Zoom in" title="Zoom In"><ZoomIn size={18} /></button>
+				<button onclick={handleZoomIn} aria-label="Zoom in" title="Zoom In"
+					><ZoomIn size={18} /></button
+				>
 			</div>
 
 			<!-- Rotation controls -->
 			<div class="pdf-toolbar-group">
-				<button onclick={handleRotateLeft} aria-label="Rotate counter-clockwise" title="Rotate Left">
+				<button
+					onclick={handleRotateLeft}
+					aria-label="Rotate counter-clockwise"
+					title="Rotate Left"
+				>
 					<RotateCcw size={18} />
 				</button>
 				<button onclick={handleRotateRight} aria-label="Rotate clockwise" title="Rotate Right">

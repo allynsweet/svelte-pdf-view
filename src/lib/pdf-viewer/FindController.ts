@@ -1,9 +1,10 @@
 /**
  * FindController - Text search functionality for PDF viewer.
- * Simplified version based on PDF.js pdf_find_controller.js
+ * Based on PDF.js pdf_find_controller.js and text_highlighter.js
  */
 import type { EventBus } from './EventBus.js';
 import type { PDFViewerCore } from './PDFViewerCore.js';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export const FindState = {
 	FOUND: 0,
@@ -20,33 +21,82 @@ export interface FindOptions {
 	findPrevious?: boolean;
 }
 
-interface PageMatch {
-	pageIndex: number;
-	matchIndex: number;
-	divIndex: number;
-	offset: number;
-	length: number;
+interface MatchPosition {
+	begin: { divIdx: number; offset: number };
+	end: { divIdx: number; offset: number };
 }
 
 export class FindController {
 	private viewer: PDFViewerCore;
 	private eventBus: EventBus;
+	private pdfDocument: PDFDocumentProxy | null = null;
 
 	private query: string = '';
 	private caseSensitive: boolean = false;
 	private entireWord: boolean = false;
 	private highlightAll: boolean = true;
 
+	// Page text content extracted directly from PDF
+	private pageContents: string[] = [];
+	private extractTextPromises: Promise<void>[] = [];
+
+	// Matches per page
 	private pageMatches: number[][] = [];
 	private pageMatchesLength: number[][] = [];
-	private allMatches: PageMatch[] = [];
-	private selectedMatchIndex: number = -1;
 
-	private highlightedElements: HTMLElement[] = [];
+	// Flattened matches for navigation
+	private allMatches: Array<{ pageIndex: number; matchIndex: number }> = [];
+	private selectedMatchIndex: number = -1;
+	private matchesCountTotal: number = 0;
 
 	constructor(viewer: PDFViewerCore, eventBus: EventBus) {
 		this.viewer = viewer;
 		this.eventBus = eventBus;
+	}
+
+	setDocument(pdfDocument: PDFDocumentProxy): void {
+		this.pdfDocument = pdfDocument;
+		this.pageContents = [];
+		this.extractTextPromises = [];
+		this.reset();
+	}
+
+	private async extractText(): Promise<void> {
+		if (!this.pdfDocument || this.extractTextPromises.length > 0) {
+			return;
+		}
+
+		const numPages = this.pdfDocument.numPages;
+
+		for (let i = 0; i < numPages; i++) {
+			const promise = (async () => {
+				try {
+					const page = await this.pdfDocument!.getPage(i + 1);
+					// Don't use disableNormalization - let PDF.js normalize the text
+					// This matches how TextLayer will render it
+					const textContent = await page.getTextContent();
+
+					const strBuf: string[] = [];
+					for (const item of textContent.items) {
+						if ('str' in item) {
+							strBuf.push(item.str);
+						}
+					}
+
+					// Join all text items directly (no separator)
+					// This creates a searchable string that matches the concatenation
+					// of all text spans in the rendered page
+					this.pageContents[i] = strBuf.join('');
+				} catch (e) {
+					console.error(`Unable to get text content for page ${i + 1}`, e);
+					this.pageContents[i] = '';
+				}
+			})();
+
+			this.extractTextPromises[i] = promise;
+		}
+
+		await Promise.all(this.extractTextPromises);
 	}
 
 	async find(options: FindOptions): Promise<void> {
@@ -58,13 +108,14 @@ export class FindController {
 			findPrevious = false
 		} = options;
 
-		// Clear previous highlights
+		// Clear previous state
 		this.clearHighlights();
 
 		if (!query || query.trim() === '') {
 			this.query = '';
 			this.allMatches = [];
 			this.selectedMatchIndex = -1;
+			this.matchesCountTotal = 0;
 			this.eventBus.dispatch('updatefindmatchescount', {
 				matchesCount: { current: 0, total: 0 }
 			});
@@ -80,32 +131,32 @@ export class FindController {
 			state: FindState.PENDING
 		});
 
+		// Extract text from PDF if not already done
+		await this.extractText();
+
 		// Search all pages
-		this.allMatches = [];
 		this.pageMatches = [];
 		this.pageMatchesLength = [];
+		this.allMatches = [];
+		this.matchesCountTotal = 0;
 
-		for (let i = 0; i < this.viewer.pagesCount; i++) {
-			const pageView = this.viewer.getPageView(i);
-			if (!pageView) continue;
+		const searchQuery = caseSensitive ? query : query.toLowerCase();
 
-			const pageMatches: number[] = [];
-			const pageMatchesLength: number[] = [];
+		for (let pageIndex = 0; pageIndex < this.pageContents.length; pageIndex++) {
+			const pageContent = this.pageContents[pageIndex];
+			const searchContent = caseSensitive ? pageContent : pageContent.toLowerCase();
 
-			const textItems = pageView.textContentItemsStr;
-			const fullText = textItems.join('');
-
-			const searchText = caseSensitive ? fullText : fullText.toLowerCase();
-			const searchQuery = caseSensitive ? query : query.toLowerCase();
+			const matches: number[] = [];
+			const matchesLength: number[] = [];
 
 			let pos = 0;
-			while ((pos = searchText.indexOf(searchQuery, pos)) !== -1) {
+			while ((pos = searchContent.indexOf(searchQuery, pos)) !== -1) {
 				// Check entire word if required
 				if (entireWord) {
-					const before = pos > 0 ? searchText[pos - 1] : ' ';
+					const before = pos > 0 ? searchContent[pos - 1] : ' ';
 					const after =
-						pos + searchQuery.length < searchText.length
-							? searchText[pos + searchQuery.length]
+						pos + searchQuery.length < searchContent.length
+							? searchContent[pos + searchQuery.length]
 							: ' ';
 					if (/\w/.test(before) || /\w/.test(after)) {
 						pos++;
@@ -113,39 +164,26 @@ export class FindController {
 					}
 				}
 
-				pageMatches.push(pos);
-				pageMatchesLength.push(searchQuery.length);
-
-				// Find which div this match belongs to
-				let charIndex = 0;
-				let divIndex = 0;
-				for (let j = 0; j < textItems.length; j++) {
-					if (charIndex + textItems[j].length > pos) {
-						divIndex = j;
-						break;
-					}
-					charIndex += textItems[j].length;
-				}
+				matches.push(pos);
+				matchesLength.push(searchQuery.length);
 
 				this.allMatches.push({
-					pageIndex: i,
-					matchIndex: pageMatches.length - 1,
-					divIndex,
-					offset: pos - charIndex,
-					length: searchQuery.length
+					pageIndex,
+					matchIndex: matches.length - 1
 				});
 
 				pos++;
 			}
 
-			this.pageMatches.push(pageMatches);
-			this.pageMatchesLength.push(pageMatchesLength);
+			this.pageMatches[pageIndex] = matches;
+			this.pageMatchesLength[pageIndex] = matchesLength;
+			this.matchesCountTotal += matches.length;
 		}
 
 		// Select first or last match based on direction
 		if (this.allMatches.length > 0) {
 			this.selectedMatchIndex = findPrevious ? this.allMatches.length - 1 : 0;
-			this.highlightMatches();
+			this.highlightAllPages();
 			this.scrollToSelectedMatch();
 
 			this.eventBus.dispatch('updatefindcontrolstate', {
@@ -161,7 +199,7 @@ export class FindController {
 		this.eventBus.dispatch('updatefindmatchescount', {
 			matchesCount: {
 				current: this.selectedMatchIndex + 1,
-				total: this.allMatches.length
+				total: this.matchesCountTotal
 			}
 		});
 	}
@@ -170,7 +208,7 @@ export class FindController {
 		if (this.allMatches.length === 0) return;
 
 		this.selectedMatchIndex = (this.selectedMatchIndex + 1) % this.allMatches.length;
-		this.highlightMatches();
+		this.highlightAllPages();
 		this.scrollToSelectedMatch();
 
 		const wrapped = this.selectedMatchIndex === 0;
@@ -180,7 +218,7 @@ export class FindController {
 		this.eventBus.dispatch('updatefindmatchescount', {
 			matchesCount: {
 				current: this.selectedMatchIndex + 1,
-				total: this.allMatches.length
+				total: this.matchesCountTotal
 			}
 		});
 	}
@@ -190,7 +228,7 @@ export class FindController {
 
 		this.selectedMatchIndex =
 			(this.selectedMatchIndex - 1 + this.allMatches.length) % this.allMatches.length;
-		this.highlightMatches();
+		this.highlightAllPages();
 		this.scrollToSelectedMatch();
 
 		const wrapped = this.selectedMatchIndex === this.allMatches.length - 1;
@@ -200,51 +238,229 @@ export class FindController {
 		this.eventBus.dispatch('updatefindmatchescount', {
 			matchesCount: {
 				current: this.selectedMatchIndex + 1,
-				total: this.allMatches.length
+				total: this.matchesCountTotal
 			}
 		});
 	}
 
-	private highlightMatches(): void {
+	private highlightAllPages(): void {
 		this.clearHighlights();
 
-		if (!this.highlightAll && this.selectedMatchIndex === -1) return;
+		for (let pageIndex = 0; pageIndex < this.viewer.pagesCount; pageIndex++) {
+			this.highlightPage(pageIndex);
+		}
+	}
 
-		for (let i = 0; i < this.allMatches.length; i++) {
-			const match = this.allMatches[i];
-			const pageView = this.viewer.getPageView(match.pageIndex);
-			if (!pageView) continue;
+	private highlightPage(pageIndex: number): void {
+		const pageView = this.viewer.getPageView(pageIndex);
+		if (!pageView) return;
 
-			const textDiv = pageView.textDivs[match.divIndex];
-			if (!textDiv) continue;
+		const matches = this.pageMatches[pageIndex];
+		const matchesLength = this.pageMatchesLength[pageIndex];
 
-			const isSelected = i === this.selectedMatchIndex;
+		if (!matches || matches.length === 0) return;
 
-			// Only highlight all if highlightAll is true, otherwise only selected
-			if (!this.highlightAll && !isSelected) continue;
+		const textDivs = pageView.textDivs;
+		const textContentItemsStr = pageView.textContentItemsStr;
 
-			// Create highlight span
-			const originalText = textDiv.textContent || '';
-			const before = originalText.substring(0, match.offset);
-			const highlighted = originalText.substring(match.offset, match.offset + match.length);
-			const after = originalText.substring(match.offset + match.length);
+		if (!textDivs || !textContentItemsStr || textContentItemsStr.length === 0) return;
 
-			// Clear and rebuild content
-			textDiv.textContent = '';
+		// Convert match positions to div positions
+		const convertedMatches = this.convertMatches(matches, matchesLength, textContentItemsStr);
 
-			if (before) {
-				textDiv.appendChild(document.createTextNode(before));
+		// Find which match in allMatches corresponds to this page's selected match
+		let selectedMatchOnPage = -1;
+		if (this.selectedMatchIndex >= 0) {
+			const selectedGlobal = this.allMatches[this.selectedMatchIndex];
+			if (selectedGlobal.pageIndex === pageIndex) {
+				selectedMatchOnPage = selectedGlobal.matchIndex;
+			}
+		}
+
+		// Render the matches
+		this.renderMatches(
+			convertedMatches,
+			textDivs,
+			textContentItemsStr,
+			selectedMatchOnPage,
+			this.highlightAll
+		);
+	}
+
+	private convertMatches(
+		matches: number[],
+		matchesLength: number[],
+		textContentItemsStr: string[]
+	): MatchPosition[] {
+		if (!matches || matches.length === 0) {
+			return [];
+		}
+
+		const result: MatchPosition[] = [];
+
+		// Build cumulative text length array
+		const textLengths: number[] = [];
+		let totalLen = 0;
+		for (const str of textContentItemsStr) {
+			textLengths.push(totalLen);
+			totalLen += str.length;
+		}
+
+		for (let m = 0; m < matches.length; m++) {
+			const matchStart = matches[m];
+			const matchEnd = matchStart + matchesLength[m];
+
+			// Find the div containing the start of the match
+			let beginDivIdx = 0;
+			for (let i = 0; i < textLengths.length; i++) {
+				if (
+					i === textLengths.length - 1 ||
+					(matchStart >= textLengths[i] &&
+						matchStart < textLengths[i] + textContentItemsStr[i].length)
+				) {
+					beginDivIdx = i;
+					break;
+				}
 			}
 
-			const highlightSpan = document.createElement('span');
-			highlightSpan.className = isSelected ? 'highlight selected' : 'highlight';
-			highlightSpan.textContent = highlighted;
-			textDiv.appendChild(highlightSpan);
-			this.highlightedElements.push(highlightSpan);
-
-			if (after) {
-				textDiv.appendChild(document.createTextNode(after));
+			// Find the div containing the end of the match
+			let endDivIdx = beginDivIdx;
+			for (let i = beginDivIdx; i < textLengths.length; i++) {
+				if (
+					i === textLengths.length - 1 ||
+					matchEnd <= textLengths[i] + textContentItemsStr[i].length
+				) {
+					endDivIdx = i;
+					break;
+				}
 			}
+
+			result.push({
+				begin: {
+					divIdx: beginDivIdx,
+					offset: matchStart - textLengths[beginDivIdx]
+				},
+				end: {
+					divIdx: endDivIdx,
+					offset: matchEnd - textLengths[endDivIdx]
+				}
+			});
+		}
+
+		return result;
+	}
+
+	private renderMatches(
+		matches: MatchPosition[],
+		textDivs: HTMLElement[],
+		textContentItemsStr: string[],
+		selectedMatchIdx: number,
+		highlightAll: boolean
+	): void {
+		if (matches.length === 0) return;
+
+		let prevEnd: { divIdx: number; offset: number } | null = null;
+		const infinity = { divIdx: -1, offset: undefined as number | undefined };
+
+		const beginText = (begin: { divIdx: number; offset: number }, className?: string): void => {
+			const divIdx = begin.divIdx;
+			textDivs[divIdx].textContent = '';
+			appendTextToDiv(divIdx, 0, begin.offset, className);
+		};
+
+		const appendTextToDiv = (
+			divIdx: number,
+			fromOffset: number,
+			toOffset: number | undefined,
+			className?: string
+		): void => {
+			const div = textDivs[divIdx];
+			if (!div) return;
+
+			const text = textContentItemsStr[divIdx];
+			const content = text.substring(fromOffset, toOffset);
+
+			if (!content) return;
+
+			const node = document.createTextNode(content);
+			if (className) {
+				const span = document.createElement('span');
+				span.className = `${className} appended`;
+				span.appendChild(node);
+				div.appendChild(span);
+			} else {
+				div.appendChild(node);
+			}
+		};
+
+		// Determine range of matches to highlight
+		let i0 = selectedMatchIdx;
+		let i1 = i0 + 1;
+		if (highlightAll) {
+			i0 = 0;
+			i1 = matches.length;
+		} else if (selectedMatchIdx < 0) {
+			return;
+		}
+
+		let lastDivIdx = -1;
+		let lastOffset = -1;
+
+		for (let i = i0; i < i1; i++) {
+			const match = matches[i];
+			const begin = match.begin;
+
+			// Skip duplicate matches at the same position (e.g., ligatures)
+			if (begin.divIdx === lastDivIdx && begin.offset === lastOffset) {
+				continue;
+			}
+			lastDivIdx = begin.divIdx;
+			lastOffset = begin.offset;
+
+			const end = match.end;
+			const isSelected = i === selectedMatchIdx;
+			const highlightSuffix = isSelected ? ' selected' : '';
+
+			// Match inside new div
+			if (!prevEnd || begin.divIdx !== prevEnd.divIdx) {
+				// If there was a previous div, add remaining text
+				if (prevEnd !== null) {
+					appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset);
+				}
+				// Clear the div and set content until the match start
+				beginText(begin);
+			} else {
+				// Same div as previous match - add text between matches
+				appendTextToDiv(prevEnd.divIdx, prevEnd.offset, begin.offset);
+			}
+
+			if (begin.divIdx === end.divIdx) {
+				// Single div match
+				appendTextToDiv(begin.divIdx, begin.offset, end.offset, 'highlight' + highlightSuffix);
+			} else {
+				// Multi-div match
+				// Highlight from begin to end of first div
+				appendTextToDiv(
+					begin.divIdx,
+					begin.offset,
+					infinity.offset,
+					'highlight begin' + highlightSuffix
+				);
+
+				// Highlight entire middle divs
+				for (let n = begin.divIdx + 1; n < end.divIdx; n++) {
+					textDivs[n].className = 'highlight middle' + highlightSuffix;
+				}
+
+				// Start end div and highlight up to match end
+				beginText(end, 'highlight end' + highlightSuffix);
+			}
+			prevEnd = end;
+		}
+
+		// Add remaining text after last match
+		if (prevEnd) {
+			appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset);
 		}
 	}
 
@@ -257,31 +473,53 @@ export class FindController {
 		// First scroll to the page
 		this.viewer.scrollToPage(match.pageIndex + 1);
 
-		// Then scroll to the highlighted element
+		// Then scroll to the highlighted element only if it's not already visible
 		setTimeout(() => {
 			const selectedElement = this.viewer.container.querySelector('.highlight.selected');
 			if (selectedElement) {
-				selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				const container = this.viewer.container;
+				const containerRect = container.getBoundingClientRect();
+				const elementRect = selectedElement.getBoundingClientRect();
+
+				// Check if element is visible within the container
+				const isVisible =
+					elementRect.top >= containerRect.top &&
+					elementRect.bottom <= containerRect.bottom &&
+					elementRect.left >= containerRect.left &&
+					elementRect.right <= containerRect.right;
+
+				if (!isVisible) {
+					selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
 			}
 		}, 100);
 	}
 
 	private clearHighlights(): void {
-		// Restore original text content
-		for (const el of this.highlightedElements) {
-			const parent = el.parentElement;
-			if (parent) {
-				const text = parent.textContent || '';
-				parent.textContent = text;
+		// Clear all highlights from all pages
+		for (let pageIndex = 0; pageIndex < this.viewer.pagesCount; pageIndex++) {
+			const pageView = this.viewer.getPageView(pageIndex);
+			if (!pageView) continue;
+
+			const textDivs = pageView.textDivs;
+			const textContentItemsStr = pageView.textContentItemsStr;
+
+			if (!textDivs || !textContentItemsStr) continue;
+
+			for (let i = 0; i < textDivs.length; i++) {
+				const div = textDivs[i];
+				if (div) {
+					div.textContent = textContentItemsStr[i] || '';
+					div.className = '';
+				}
 			}
 		}
-		this.highlightedElements = [];
 	}
 
 	get matchesCount(): { current: number; total: number } {
 		return {
 			current: this.selectedMatchIndex + 1,
-			total: this.allMatches.length
+			total: this.matchesCountTotal
 		};
 	}
 
@@ -292,5 +530,6 @@ export class FindController {
 		this.pageMatches = [];
 		this.pageMatchesLength = [];
 		this.selectedMatchIndex = -1;
+		this.matchesCountTotal = 0;
 	}
 }

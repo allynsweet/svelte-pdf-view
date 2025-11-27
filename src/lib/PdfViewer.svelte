@@ -48,7 +48,9 @@
 	$effect(() => {
 		if (innerComponent) {
 			// Svelte 5 mount returns a component instance with bound props
-			(innerComponent as unknown as { $set: (props: Record<string, unknown>) => void }).$set?.({ src });
+			(innerComponent as unknown as { $set: (props: Record<string, unknown>) => void }).$set?.({
+				src
+			});
 		}
 	});
 

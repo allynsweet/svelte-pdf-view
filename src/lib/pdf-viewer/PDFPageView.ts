@@ -291,8 +291,10 @@ export class PDFPageView {
 			await this.textLayer.render();
 			this.textLayerRendered = true;
 
-			// Collect text divs and strings for search functionality
-			const spans = this.textLayerDiv.querySelectorAll('span');
+			// Collect text divs and their content for search highlighting
+			// We extract text from the rendered spans to ensure 1:1 correspondence
+			// between textDivs and textContentItemsStr
+			const spans = this.textLayerDiv.querySelectorAll('span:not(.markedContent)');
 			spans.forEach((span) => {
 				this.textDivs.push(span as HTMLElement);
 				this.textContentItemsStr.push(span.textContent || '');
