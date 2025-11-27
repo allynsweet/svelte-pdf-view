@@ -41,7 +41,7 @@ If you're using Vite (including SvelteKit), you may need to exclude `pdfjs-dist`
 export default defineConfig({
 	// ... other config
 	optimizeDeps: {
-		exclude: ['pdfjs-dist']
+		exclude: ['svelte-pdf-view']
 	}
 });
 ```
