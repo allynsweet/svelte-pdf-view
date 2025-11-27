@@ -19,7 +19,7 @@
  */
 import type { EventBus } from './EventBus.js';
 import type { PDFViewerCore } from './PDFViewerCore.js';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 export const FindState = {
 	FOUND: 0,

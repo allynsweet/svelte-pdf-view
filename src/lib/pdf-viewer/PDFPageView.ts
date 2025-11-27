@@ -17,8 +17,8 @@
  * PDFPageView - Renders a single PDF page with canvas and text layer.
  * This is a derivative work based on PDF.js pdf_page_view.js
  */
-import type { PDFPageProxy, PageViewport, TextLayer } from 'pdfjs-dist';
-import { setLayerDimensions } from 'pdfjs-dist';
+import type { PDFPageProxy, PageViewport, TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { setLayerDimensions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { EventBus } from './EventBus.js';
 
 export interface PDFPageViewOptions {
@@ -284,7 +284,7 @@ export class PDFPageView {
 
 		try {
 			// Import TextLayer from pdfjs-dist
-			const { TextLayer } = await import('pdfjs-dist');
+			const { TextLayer } = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
 			const textContent = await this.pdfPage.getTextContent();
 

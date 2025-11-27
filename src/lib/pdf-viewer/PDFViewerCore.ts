@@ -17,7 +17,7 @@
  * PDFViewerCore - Main viewer that manages all pages in a scroll container.
  * This is a derivative work based on PDF.js pdf_viewer.js
  */
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventBus } from './EventBus.js';
 import { PDFPageView, RenderingStates } from './PDFPageView.js';
 

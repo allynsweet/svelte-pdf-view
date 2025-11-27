@@ -45,13 +45,13 @@
 	// Core instances
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
-	let pdfjsLib: typeof import('pdfjs-dist') | null = null;
+	let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
 
 	async function initPdfJs() {
 		if (!browser) return null;
 
-		pdfjsLib = await import('pdfjs-dist');
-		const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
+		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+		const pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url');
 		pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default;
 
 		return pdfjsLib;
