@@ -1,6 +1,17 @@
 {
 	"name": "svelte-pdf-view",
 	"version": "0.1.0",
+	"description": "A modern, modular PDF viewer component for Svelte 5. Built on PDF.js with TypeScript support",
+	"author": "Louis Li",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nullpointerexceptionkek/svelte-pdf-view.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nullpointerexceptionkek/svelte-pdf-view/issues"
+	},
+	"homepage": "https://github.com/nullpointerexceptionkek/svelte-pdf-view#readme",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
