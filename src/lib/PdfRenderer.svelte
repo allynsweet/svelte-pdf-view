@@ -45,19 +45,25 @@
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
 	let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
+	let pdfWorker: import('pdfjs-dist/legacy/build/pdf.mjs').PDFWorker | null = null;
+	let rawWorker: Worker | null = null;
 
 	async function initPdfJs() {
 		if (!BROWSER) return null;
 
+		// Return cached instance if already initialized
+		if (pdfjsLib && pdfWorker) return pdfjsLib;
+
 		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-		// Create worker using import.meta.url for proper bundler resolution
-		const worker = new pdfjsLib.PDFWorker({
-			port: new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
-				type: 'module'
-			}) as unknown as null
+		// Create worker only once using import.meta.url for proper bundler resolution
+		rawWorker = new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
+			type: 'module'
 		});
-		pdfjsLib.GlobalWorkerOptions.workerPort = worker.port;
+		pdfWorker = new pdfjsLib.PDFWorker({
+			port: rawWorker as unknown as null
+		});
+		pdfjsLib.GlobalWorkerOptions.workerPort = pdfWorker.port;
 
 		return pdfjsLib;
 	}
@@ -228,6 +234,17 @@
 			viewer = null;
 		}
 		findController = null;
+
+		// Cleanup worker to prevent memory leaks
+		if (pdfWorker) {
+			pdfWorker.destroy();
+			pdfWorker = null;
+		}
+		if (rawWorker) {
+			rawWorker.terminate();
+			rawWorker = null;
+		}
+		pdfjsLib = null;
 	});
 </script>
 
