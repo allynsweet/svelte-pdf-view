@@ -42,29 +42,6 @@
 	// Core instances (loaded dynamically)
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
-	let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
-	let pdfWorker: import('pdfjs-dist/legacy/build/pdf.mjs').PDFWorker | null = null;
-	let rawWorker: Worker | null = null;
-
-	async function initPdfJs() {
-		if (!BROWSER) return null;
-
-		// Return cached instance if already initialized
-		if (pdfjsLib && pdfWorker) return pdfjsLib;
-
-		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-
-		// Create worker only once using import.meta.url
-		rawWorker = new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
-			type: 'module'
-		});
-		pdfWorker = new pdfjsLib.PDFWorker({
-			port: rawWorker as unknown as null
-		});
-		pdfjsLib.GlobalWorkerOptions.workerPort = pdfWorker.port;
-
-		return pdfjsLib;
-	}
 
 	async function loadPdf(url: string) {
 		if (!BROWSER || !scrollContainerEl) return;
@@ -73,8 +50,9 @@
 		error = null;
 
 		try {
-			// Initialize PDF.js
-			const pdfjs = await initPdfJs();
+			// Get PDF.js from global singleton
+			const { getPdfJs } = await import('./pdf-viewer/pdfjs-singleton.js');
+			const pdfjs = await getPdfJs();
 			if (!pdfjs) return;
 
 			// Initialize viewer
@@ -229,17 +207,8 @@
 			viewer = null;
 		}
 		findController = null;
-
-		// Cleanup worker to prevent memory leaks
-		if (pdfWorker) {
-			pdfWorker.destroy();
-			pdfWorker = null;
-		}
-		if (rawWorker) {
-			rawWorker.terminate();
-			rawWorker = null;
-		}
-		pdfjsLib = null;
+		// Note: Worker is a global singleton, not cleaned up per-component
+		// Use destroyPdfJs() from pdfjs-singleton.js if you need to fully cleanup
 	});
 </script>
 

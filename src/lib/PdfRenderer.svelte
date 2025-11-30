@@ -2,6 +2,7 @@
 	import { BROWSER } from 'esm-env';
 	import { onDestroy, onMount } from 'svelte';
 	import { getPdfViewerContext, type PdfViewerActions } from './pdf-viewer/context.js';
+	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
 
 	/** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
@@ -44,29 +45,6 @@
 	// Core instances
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
-	let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
-	let pdfWorker: import('pdfjs-dist/legacy/build/pdf.mjs').PDFWorker | null = null;
-	let rawWorker: Worker | null = null;
-
-	async function initPdfJs() {
-		if (!BROWSER) return null;
-
-		// Return cached instance if already initialized
-		if (pdfjsLib && pdfWorker) return pdfjsLib;
-
-		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-
-		// Create worker only once using import.meta.url for proper bundler resolution
-		rawWorker = new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
-			type: 'module'
-		});
-		pdfWorker = new pdfjsLib.PDFWorker({
-			port: rawWorker as unknown as null
-		});
-		pdfjsLib.GlobalWorkerOptions.workerPort = pdfWorker.port;
-
-		return pdfjsLib;
-	}
 
 	async function loadPdf(source: PdfSource) {
 		if (!BROWSER || !scrollContainerEl) return;
@@ -75,7 +53,7 @@
 		viewerState.error = null;
 
 		try {
-			const pdfjs = await initPdfJs();
+			const pdfjs = await getPdfJs();
 			if (!pdfjs) return;
 
 			const { PDFViewerCore } = await import('./pdf-viewer/PDFViewerCore.js');
@@ -234,17 +212,8 @@
 			viewer = null;
 		}
 		findController = null;
-
-		// Cleanup worker to prevent memory leaks
-		if (pdfWorker) {
-			pdfWorker.destroy();
-			pdfWorker = null;
-		}
-		if (rawWorker) {
-			rawWorker.terminate();
-			rawWorker = null;
-		}
-		pdfjsLib = null;
+		// Note: Worker is a global singleton, not cleaned up per-component
+		// Use destroyPdfJs() from pdfjs-singleton.js if you need to fully cleanup
 	});
 </script>
 
