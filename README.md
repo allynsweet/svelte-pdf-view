@@ -60,10 +60,12 @@ This is especially important in monorepo setups where Vite's optimizer may incor
 <div style="height: 100vh;">
 	<PdfViewer src="/document.pdf">
 		<PdfToolbar />
-		<PdfRenderer src="/document.pdf" />
+		<PdfRenderer />
 	</PdfViewer>
 </div>
 ```
+
+The `src` prop is passed to `PdfViewer` and automatically shared with `PdfRenderer` via context - no need to pass it twice!
 
 ### Loading from Different Sources
 
@@ -94,7 +96,7 @@ This is especially important in monorepo setups where Vite's optimizer may incor
 
 <PdfViewer src={pdfSource}>
 	<PdfToolbar />
-	<PdfRenderer src={pdfSource} />
+	<PdfRenderer />
 </PdfViewer>
 ```
 

@@ -6,7 +6,8 @@
 		RotateCw,
 		Search,
 		ChevronLeft,
-		ChevronRight
+		ChevronRight,
+		Download
 	} from '@lucide/svelte';
 	import { getPdfViewerContext } from './pdf-viewer/context.js';
 
@@ -113,6 +114,13 @@
 			</button>
 			<span class="match-info">{viewerState.searchCurrent}/{viewerState.searchTotal}</span>
 		{/if}
+	</div>
+
+	<!-- Download -->
+	<div class="pdf-toolbar-group">
+		<button onclick={() => actions.download()} aria-label="Download PDF" title="Download">
+			<Download size={18} />
+		</button>
 	</div>
 </div>
 

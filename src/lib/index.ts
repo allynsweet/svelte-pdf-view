@@ -5,8 +5,8 @@ export {
 	Renderer as PdfRenderer
 } from './PdfViewer.svelte';
 
-// Export types
-export type { PdfSource } from './PdfRenderer.svelte';
+// Export types from context (PdfSource is the canonical source)
+export type { PdfSource } from './pdf-viewer/context.js';
 
 // Export context for custom toolbars
 export {

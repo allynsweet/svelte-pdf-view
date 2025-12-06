@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { BROWSER } from 'esm-env';
 	import { onDestroy, onMount } from 'svelte';
-	import { getPdfViewerContext, type PdfViewerActions } from './pdf-viewer/context.js';
+	import {
+		getPdfViewerContext,
+		type PdfViewerActions,
+		type PdfSource
+	} from './pdf-viewer/context.js';
 	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
 
-	/** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
-	export type PdfSource = string | ArrayBuffer | Uint8Array | Blob;
+	// Re-export PdfSource type for convenience
+	export type { PdfSource };
 
 	interface Props {
-		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob */
-		src: PdfSource;
+		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob. If not provided, uses src from PdfViewer context. */
+		src?: PdfSource;
 		/** Background color of the scroll container */
 		backgroundColor?: string;
 		/** Page shadow style */
@@ -26,7 +30,7 @@
 	}
 
 	let {
-		src,
+		src: srcProp,
 		backgroundColor = '#e8e8e8',
 		pageShadow = '0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08)',
 		scrollbarTrackColor = '#f1f1f1',
@@ -35,7 +39,10 @@
 		scrollbarWidth = '10px'
 	}: Props = $props();
 
-	const { state: viewerState, _registerRenderer } = getPdfViewerContext();
+	const { state: viewerState, src: contextSrc, _registerRenderer } = getPdfViewerContext();
+
+	// Use prop src if provided, otherwise fall back to context src
+	let src = $derived(srcProp ?? contextSrc);
 
 	let hostEl: HTMLDivElement | undefined = $state();
 	let shadowRoot: ShadowRoot | null = null;
@@ -161,7 +168,8 @@
 				viewerState.searchCurrent = 0;
 				viewerState.searchTotal = 0;
 			}
-		}
+		},
+		download: () => {} // Download is handled by PdfViewer, not renderer
 	};
 
 	onMount(async () => {

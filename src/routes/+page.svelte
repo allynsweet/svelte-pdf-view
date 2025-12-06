@@ -23,7 +23,6 @@
 		<PdfViewer src={pdfUrl}>
 			<PdfToolbar />
 			<PdfRenderer
-				src={pdfUrl}
 				backgroundColor="#e8e8e8"
 				scrollbarThumbColor="#c1c1c1"
 				scrollbarTrackColor="#f1f1f1"

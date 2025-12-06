@@ -5,6 +5,9 @@ import { getContext, setContext } from 'svelte';
 
 const PDF_VIEWER_CONTEXT_KEY = Symbol('pdf-viewer');
 
+/** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
+export type PdfSource = string | ArrayBuffer | Uint8Array | Blob;
+
 export interface PdfViewerState {
 	// Document state
 	loading: boolean;
@@ -34,11 +37,14 @@ export interface PdfViewerActions {
 	searchNext: () => void;
 	searchPrevious: () => void;
 	clearSearch: () => void;
+	download: (filename?: string) => void;
 }
 
 export interface PdfViewerContext {
 	state: PdfViewerState;
 	actions: PdfViewerActions;
+	/** The PDF source - shared from PdfViewer to PdfRenderer */
+	src: PdfSource;
 	// For internal use - allows renderer to register itself
 	_registerRenderer: (renderer: PdfViewerActions) => void;
 }
