@@ -166,7 +166,7 @@
 				viewerState.searchTotal = 0;
 			}
 		},
-		download: () => {} // Download is handled by PdfViewer, not renderer
+		download: async () => {} // Download is handled by PdfViewer, not renderer
 	};
 
 	onMount(async () => {

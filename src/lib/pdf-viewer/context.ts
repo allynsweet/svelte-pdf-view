@@ -37,7 +37,7 @@ export interface PdfViewerActions {
 	searchNext: () => void;
 	searchPrevious: () => void;
 	clearSearch: () => void;
-	download: (filename?: string) => void;
+	download: (filename?: string) => Promise<void>;
 }
 
 export interface PdfViewerContext {

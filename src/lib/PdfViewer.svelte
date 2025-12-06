@@ -52,46 +52,44 @@
 	let rendererActions: PdfViewerActions | null = null;
 
 	// Download helper function
-	function downloadPdf(filenameOverride?: string) {
+	async function downloadPdf(filenameOverride?: string) {
 		const downloadName =
 			filenameOverride ||
 			downloadFilename ||
 			(typeof src === 'string' ? src.split('/').pop() : 'document.pdf') ||
 			'document.pdf';
 
+		let blob: Blob;
+
 		if (typeof src === 'string') {
-			// URL - fetch and download
-			const link = document.createElement('a');
-			link.href = src;
-			link.download = downloadName;
-			link.click();
+			// URL - fetch first to handle cross-origin URLs (e.g., Firebase Storage)
+			// The download attribute is ignored for cross-origin URLs
+			try {
+				const response = await fetch(src);
+				blob = await response.blob();
+			} catch {
+				// Fallback for same-origin URLs if fetch fails
+				const link = document.createElement('a');
+				link.href = src;
+				link.download = downloadName;
+				link.click();
+				return;
+			}
 		} else if (src instanceof Blob) {
-			// Blob - create object URL
-			const url = URL.createObjectURL(src);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = downloadName;
-			link.click();
-			URL.revokeObjectURL(url);
+			blob = src;
 		} else if (src instanceof ArrayBuffer) {
-			// ArrayBuffer
-			const blob = new Blob([src], { type: 'application/pdf' });
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = downloadName;
-			link.click();
-			URL.revokeObjectURL(url);
+			blob = new Blob([src], { type: 'application/pdf' });
 		} else {
-			// Uint8Array - create a copy as ArrayBuffer
-			const blob = new Blob([new Uint8Array(src)], { type: 'application/pdf' });
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = downloadName;
-			link.click();
-			URL.revokeObjectURL(url);
+			// Uint8Array
+			blob = new Blob([new Uint8Array(src)], { type: 'application/pdf' });
 		}
+
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = downloadName;
+		link.click();
+		URL.revokeObjectURL(url);
 	}
 
 	// Actions that proxy to the renderer
