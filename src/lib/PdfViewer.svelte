@@ -18,13 +18,21 @@
 		src: PdfSource;
 		/** Initial scale (default: 1.0) */
 		scale?: number;
+		/** Custom filename for PDF download (default: extracted from URL or 'document.pdf') */
+		downloadFilename?: string;
 		/** CSS class for the container */
 		class?: string;
 		/** Children (toolbar and renderer) */
 		children?: Snippet;
 	}
 
-	let { src, scale: initialScale = 1.0, class: className = '', children }: Props = $props();
+	let {
+		src,
+		scale: initialScale = 1.0,
+		downloadFilename,
+		class: className = '',
+		children
+	}: Props = $props();
 
 	// Reactive state that will be shared via context
 	let state = $state<PdfViewerState>({
@@ -44,9 +52,10 @@
 	let rendererActions: PdfViewerActions | null = null;
 
 	// Download helper function
-	function downloadPdf(filename?: string) {
+	function downloadPdf(filenameOverride?: string) {
 		const downloadName =
-			filename ||
+			filenameOverride ||
+			downloadFilename ||
 			(typeof src === 'string' ? src.split('/').pop() : 'document.pdf') ||
 			'document.pdf';
 

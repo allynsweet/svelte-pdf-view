@@ -112,11 +112,12 @@ The main container component that provides context for toolbar and renderer.
 </PdfViewer>
 ```
 
-| Prop    | Type        | Default  | Description                                        |
-| ------- | ----------- | -------- | -------------------------------------------------- |
-| `src`   | `PdfSource` | required | PDF source (URL, ArrayBuffer, Uint8Array, or Blob) |
-| `scale` | `number`    | `1.0`    | Initial zoom scale                                 |
-| `class` | `string`    | `''`     | CSS class for the container                        |
+| Prop               | Type        | Default  | Description                                                            |
+| ------------------ | ----------- | -------- | ---------------------------------------------------------------------- |
+| `src`              | `PdfSource` | required | PDF source (URL, ArrayBuffer, Uint8Array, or Blob)                     |
+| `scale`            | `number`    | `1.0`    | Initial zoom scale                                                     |
+| `downloadFilename` | `string`    | -        | Custom filename for PDF download (default: from URL or 'document.pdf') |
+| `class`            | `string`    | `''`     | CSS class for the container                                            |
 
 ### `<PdfToolbar>`
 
