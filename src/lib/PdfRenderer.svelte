@@ -9,9 +9,6 @@
 	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
 
-	// Re-export PdfSource type for convenience
-	export type { PdfSource };
-
 	interface Props {
 		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob. If not provided, uses src from PdfViewer context. */
 		src?: PdfSource;
