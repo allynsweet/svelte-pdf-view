@@ -36,10 +36,11 @@
 		scrollbarWidth = '10px'
 	}: Props = $props();
 
-	const { state: viewerState, src: contextSrc, _registerRenderer } = getPdfViewerContext();
+	const context = getPdfViewerContext();
+	const { state: viewerState, _registerRenderer } = context;
 
-	// Use prop src if provided, otherwise fall back to context src
-	let src = $derived(srcProp ?? contextSrc);
+	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
+	let src = $derived(srcProp ?? context.src);
 
 	let hostEl: HTMLDivElement | undefined = $state();
 	let shadowRoot: ShadowRoot | null = null;

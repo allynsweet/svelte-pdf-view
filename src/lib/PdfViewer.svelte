@@ -115,7 +115,9 @@
 	setPdfViewerContext({
 		state,
 		actions,
-		src,
+		get src() {
+			return src;
+		},
 		_registerRenderer: (renderer: PdfViewerActions) => {
 			rendererActions = renderer;
 		}
