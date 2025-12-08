@@ -112,12 +112,37 @@ The main container component that provides context for toolbar and renderer.
 </PdfViewer>
 ```
 
-| Prop               | Type        | Default  | Description                                                            |
-| ------------------ | ----------- | -------- | ---------------------------------------------------------------------- |
-| `src`              | `PdfSource` | required | PDF source (URL, ArrayBuffer, Uint8Array, or Blob)                     |
-| `scale`            | `number`    | `1.0`    | Initial zoom scale                                                     |
-| `downloadFilename` | `string`    | -        | Custom filename for PDF download (default: from URL or 'document.pdf') |
-| `class`            | `string`    | `''`     | CSS class for the container                                            |
+| Prop               | Type                      | Default  | Description                                                            |
+| ------------------ | ------------------------- | -------- | ---------------------------------------------------------------------- |
+| `src`              | `PdfSource`               | required | PDF source (URL, ArrayBuffer, Uint8Array, or Blob)                     |
+| `scale`            | `number`                  | `1.0`    | Initial zoom scale                                                     |
+| `downloadFilename` | `string`                  | -        | Custom filename for PDF download (default: from URL or 'document.pdf') |
+| `onerror`          | `(error: string) => void` | -        | Callback when PDF fails to load                                        |
+| `class`            | `string`                  | `''`     | CSS class for the container                                            |
+
+#### Error Handling
+
+```svelte
+<script lang="ts">
+	import { PdfViewer, PdfToolbar, PdfRenderer } from 'svelte-pdf-view';
+
+	let errorMessage = $state<string | null>(null);
+
+	function handleError(error: string) {
+		errorMessage = error;
+		console.error('PDF failed to load:', error);
+	}
+</script>
+
+{#if errorMessage}
+	<div class="error-banner">Failed to load PDF: {errorMessage}</div>
+{/if}
+
+<PdfViewer src="/document.pdf" onerror={handleError}>
+	<PdfToolbar />
+	<PdfRenderer />
+</PdfViewer>
+```
 
 ### `<PdfToolbar>`
 
@@ -213,18 +238,19 @@ You can create your own toolbar using the context API:
 
 #### `actions: PdfViewerActions`
 
-| Method                     | Description                  |
-| -------------------------- | ---------------------------- |
-| `zoomIn()`                 | Increase zoom level          |
-| `zoomOut()`                | Decrease zoom level          |
-| `setScale(scale: number)`  | Set specific zoom scale      |
-| `rotateClockwise()`        | Rotate 90° clockwise         |
-| `rotateCounterClockwise()` | Rotate 90° counter-clockwise |
-| `goToPage(page: number)`   | Navigate to specific page    |
-| `search(query: string)`    | Search for text              |
-| `searchNext()`             | Go to next search match      |
-| `searchPrevious()`         | Go to previous search match  |
-| `clearSearch()`            | Clear search highlights      |
+| Method                        | Description                  |
+| ----------------------------- | ---------------------------- |
+| `zoomIn()`                    | Increase zoom level          |
+| `zoomOut()`                   | Decrease zoom level          |
+| `setScale(scale: number)`     | Set specific zoom scale      |
+| `rotateClockwise()`           | Rotate 90° clockwise         |
+| `rotateCounterClockwise()`    | Rotate 90° counter-clockwise |
+| `goToPage(page: number)`      | Navigate to specific page    |
+| `search(query: string)`       | Search for text              |
+| `searchNext()`                | Go to next search match      |
+| `searchPrevious()`            | Go to previous search match  |
+| `clearSearch()`               | Clear search highlights      |
+| `download(filename?: string)` | Download the PDF             |
 
 ## Types
 
@@ -256,6 +282,7 @@ interface PdfViewerActions {
 	searchNext: () => void;
 	searchPrevious: () => void;
 	clearSearch: () => void;
+	download: (filename?: string) => Promise<void>;
 }
 ```
 

@@ -20,6 +20,8 @@
 		scale?: number;
 		/** Custom filename for PDF download (default: extracted from URL or 'document.pdf') */
 		downloadFilename?: string;
+		/** Callback when PDF fails to load */
+		onerror?: (error: string) => void;
 		/** CSS class for the container */
 		class?: string;
 		/** Children (toolbar and renderer) */
@@ -30,12 +32,17 @@
 		src,
 		scale: initialScale = 1.0,
 		downloadFilename,
+		onerror,
 		class: className = '',
 		children
 	}: Props = $props();
 
+	// Keep a copy of binary source data for download (PDF.js transfers/detaches ArrayBuffers)
+	// This is set by PdfRenderer before it passes data to PDF.js
+	let srcDataForDownload = $state<ArrayBuffer | null>(null);
+
 	// Reactive state that will be shared via context
-	let state = $state<PdfViewerState>({
+	let viewerState = $state<PdfViewerState>({
 		loading: true,
 		error: null,
 		totalPages: 0,
@@ -77,11 +84,12 @@
 			}
 		} else if (src instanceof Blob) {
 			blob = src;
-		} else if (src instanceof ArrayBuffer) {
-			blob = new Blob([src], { type: 'application/pdf' });
+		} else if (srcDataForDownload) {
+			// Use the pre-copied data (original ArrayBuffer/Uint8Array gets detached by PDF.js)
+			blob = new Blob([srcDataForDownload], { type: 'application/pdf' });
 		} else {
-			// Uint8Array
-			blob = new Blob([new Uint8Array(src)], { type: 'application/pdf' });
+			console.error('Cannot download: no valid source data available');
+			return;
 		}
 
 		const url = URL.createObjectURL(blob);
@@ -113,22 +121,26 @@
 
 	// Set up context
 	setPdfViewerContext({
-		state,
+		state: viewerState,
 		actions,
 		get src() {
 			return src;
 		},
 		_registerRenderer: (renderer: PdfViewerActions) => {
 			rendererActions = renderer;
+		},
+		_onerror: onerror,
+		_setSrcDataForDownload: (data: ArrayBuffer | null) => {
+			srcDataForDownload = data;
 		}
 	});
 </script>
 
 <div class="pdf-viewer-container {className}">
-	{#if state.loading}
+	{#if viewerState.loading}
 		<div class="pdf-loading">Loading PDF...</div>
-	{:else if state.error}
-		<div class="pdf-error">Error: {state.error}</div>
+	{:else if viewerState.error}
+		<div class="pdf-error">Error: {viewerState.error}</div>
 	{/if}
 
 	{#if children}

@@ -37,7 +37,7 @@
 	}: Props = $props();
 
 	const context = getPdfViewerContext();
-	const { state: viewerState, _registerRenderer } = context;
+	const { state: viewerState, _registerRenderer, _setSrcDataForDownload } = context;
 
 	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
 	let src = $derived(srcProp ?? context.src);
@@ -110,13 +110,17 @@
 			if (typeof source === 'string') {
 				// URL string
 				documentSource = source;
+				_setSrcDataForDownload(null); // URL doesn't need copying
 			} else if (source instanceof Blob) {
 				// Convert Blob to ArrayBuffer
 				const arrayBuffer = await source.arrayBuffer();
+				_setSrcDataForDownload(arrayBuffer.slice(0)); // Store a copy for download
 				documentSource = { data: arrayBuffer };
 			} else if (source instanceof ArrayBuffer) {
+				_setSrcDataForDownload(source.slice(0)); // Store a copy before PDF.js detaches it
 				documentSource = { data: source };
 			} else if (source instanceof Uint8Array) {
+				_setSrcDataForDownload(new Uint8Array(source).buffer.slice(0) as ArrayBuffer); // Store a copy for download
 				documentSource = { data: source };
 			} else {
 				throw new Error('Invalid PDF source type');
@@ -131,8 +135,11 @@
 			viewer = newViewer;
 			viewerState.loading = false;
 		} catch (e) {
-			viewerState.error = e instanceof Error ? e.message : 'Failed to load PDF';
+			const errorMessage = e instanceof Error ? e.message : 'Failed to load PDF';
+			viewerState.error = errorMessage;
 			viewerState.loading = false;
+			// Call the error callback if provided
+			context._onerror?.(errorMessage);
 		}
 	}
 

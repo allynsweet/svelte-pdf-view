@@ -47,6 +47,10 @@ export interface PdfViewerContext {
 	src: PdfSource;
 	// For internal use - allows renderer to register itself
 	_registerRenderer: (renderer: PdfViewerActions) => void;
+	// For internal use - error callback from PdfViewer
+	_onerror?: (error: string) => void;
+	// For internal use - store binary data copy for download (ArrayBuffer gets detached by PDF.js)
+	_setSrcDataForDownload: (data: ArrayBuffer | null) => void;
 }
 
 export function setPdfViewerContext(ctx: PdfViewerContext): void {
