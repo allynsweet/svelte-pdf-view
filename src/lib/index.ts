@@ -11,6 +11,7 @@ export type { PdfSource } from './pdf-viewer/context.js';
 // Export context for custom toolbars
 export {
 	getPdfViewerContext,
+	PresentationModeState,
 	type PdfViewerState,
 	type PdfViewerActions,
 	type PdfViewerContext

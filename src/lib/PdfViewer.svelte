@@ -8,6 +8,7 @@
 	import type { Snippet } from 'svelte';
 	import {
 		setPdfViewerContext,
+		PresentationModeState,
 		type PdfViewerState,
 		type PdfViewerActions,
 		type PdfSource
@@ -52,7 +53,8 @@
 		searchQuery: '',
 		searchCurrent: 0,
 		searchTotal: 0,
-		isSearching: false
+		isSearching: false,
+		presentationMode: PresentationModeState.NORMAL
 	});
 
 	// Renderer actions - will be populated when renderer mounts
@@ -116,7 +118,18 @@
 		searchNext: () => rendererActions?.searchNext(),
 		searchPrevious: () => rendererActions?.searchPrevious(),
 		clearSearch: () => rendererActions?.clearSearch(),
-		download: downloadPdf
+		download: downloadPdf,
+		enterPresentationMode: async () => {
+			if (rendererActions) {
+				return rendererActions.enterPresentationMode();
+			}
+			return false;
+		},
+		exitPresentationMode: async () => {
+			if (rendererActions) {
+				await rendererActions.exitPresentationMode();
+			}
+		}
 	};
 
 	// Set up context

@@ -7,6 +7,7 @@
 		type PdfSource
 	} from './pdf-viewer/context.js';
 	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
+	import { PdfPresentationMode } from './pdf-viewer/PdfPresentationMode.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
 
 	interface Props {
@@ -50,6 +51,17 @@
 	// Core instances
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
 	let findController: import('./pdf-viewer/FindController.js').FindController | null = null;
+
+	// Presentation mode
+	const presentationMode = new PdfPresentationMode({
+		onStateChange: (newState) => {
+			viewerState.presentationMode = newState;
+		},
+		onPageChange: (pageNumber) => {
+			// Sync page number back to main viewer when changed in presentation mode
+			viewer?.scrollToPage(pageNumber);
+		}
+	});
 
 	async function loadPdf(source: PdfSource) {
 		if (!BROWSER || !scrollContainerEl) return;
@@ -127,10 +139,13 @@
 			}
 
 			const loadingTask = pdfjs.getDocument(documentSource);
-			const pdfDocument = await loadingTask.promise;
+			const loadedPdfDocument = await loadingTask.promise;
 
-			await newViewer.setDocument(pdfDocument);
-			findController.setDocument(pdfDocument);
+			await newViewer.setDocument(loadedPdfDocument);
+			findController.setDocument(loadedPdfDocument);
+
+			// Set document on presentation mode
+			presentationMode.setDocument(loadedPdfDocument);
 
 			viewer = newViewer;
 			viewerState.loading = false;
@@ -174,7 +189,14 @@
 				viewerState.searchTotal = 0;
 			}
 		},
-		download: async () => {} // Download is handled by PdfViewer, not renderer
+		download: async () => {}, // Download is handled by PdfViewer, not renderer
+		enterPresentationMode: async () => {
+			presentationMode.setCurrentPage(viewerState.currentPage);
+			return presentationMode.request();
+		},
+		exitPresentationMode: async () => {
+			await presentationMode.exit();
+		}
 	};
 
 	onMount(async () => {
@@ -225,6 +247,7 @@
 			viewer = null;
 		}
 		findController = null;
+		presentationMode.destroy();
 		// Note: Worker is a global singleton, not cleaned up per-component
 		// Use destroyPdfJs() from pdfjs-singleton.js if you need to fully cleanup
 	});

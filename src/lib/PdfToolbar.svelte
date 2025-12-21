@@ -7,7 +7,8 @@
 		Search,
 		ChevronLeft,
 		ChevronRight,
-		Download
+		Download,
+		Presentation
 	} from '@lucide/svelte';
 	import { getPdfViewerContext } from './pdf-viewer/context.js';
 
@@ -116,8 +117,15 @@
 		{/if}
 	</div>
 
-	<!-- Download -->
+	<!-- Presentation & Download -->
 	<div class="pdf-toolbar-group">
+		<button
+			onclick={() => actions.enterPresentationMode()}
+			aria-label="Presentation Mode"
+			title="Presentation Mode"
+		>
+			<Presentation size={18} />
+		</button>
 		<button onclick={() => actions.download()} aria-label="Download PDF" title="Download">
 			<Download size={18} />
 		</button>

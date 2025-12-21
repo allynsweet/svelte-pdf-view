@@ -8,6 +8,14 @@ const PDF_VIEWER_CONTEXT_KEY = Symbol('pdf-viewer');
 /** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
 export type PdfSource = string | ArrayBuffer | Uint8Array | Blob;
 
+/** Presentation mode state */
+export enum PresentationModeState {
+	UNKNOWN = 0,
+	NORMAL = 1,
+	CHANGING = 2,
+	FULLSCREEN = 3
+}
+
 export interface PdfViewerState {
 	// Document state
 	loading: boolean;
@@ -24,6 +32,9 @@ export interface PdfViewerState {
 	searchCurrent: number;
 	searchTotal: number;
 	isSearching: boolean;
+
+	// Presentation mode state
+	presentationMode: PresentationModeState;
 }
 
 export interface PdfViewerActions {
@@ -38,6 +49,10 @@ export interface PdfViewerActions {
 	searchPrevious: () => void;
 	clearSearch: () => void;
 	download: (filename?: string) => Promise<void>;
+	/** Enter fullscreen presentation mode */
+	enterPresentationMode: () => Promise<boolean>;
+	/** Exit fullscreen presentation mode */
+	exitPresentationMode: () => Promise<void>;
 }
 
 export interface PdfViewerContext {
