@@ -201,4 +201,159 @@ export const rendererStyles = `
 .textLayer .highlight.middle {
 	border-radius: 0;
 }
+
+/* Annotation Layer - for links, form widgets, popups */
+.annotationLayer {
+	--annotation-unfocused-field-background: url("data:image/svg+xml;charset=UTF-8,<svg width='1px' height='1px' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' style='fill:rgba(0, 54, 255, 0.13);'/></svg>");
+	--input-focus-border-color: Highlight;
+	--input-focus-outline: 1px solid Canvas;
+	--input-unfocused-border-color: transparent;
+	--input-disabled-border-color: transparent;
+	--input-hover-border-color: black;
+
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	transform-origin: 0 0;
+	z-index: 3;
+}
+
+.annotationLayer[data-main-rotation='90'] .norotate {
+	transform: rotate(270deg) translateX(-100%);
+}
+.annotationLayer[data-main-rotation='180'] .norotate {
+	transform: rotate(180deg) translate(-100%, -100%);
+}
+.annotationLayer[data-main-rotation='270'] .norotate {
+	transform: rotate(90deg) translateY(-100%);
+}
+
+.annotationLayer section {
+	position: absolute;
+	text-align: initial;
+	pointer-events: auto;
+	box-sizing: border-box;
+	transform-origin: 0 0;
+	user-select: none;
+}
+
+/* Link annotations */
+.annotationLayer .linkAnnotation > a,
+.annotationLayer .buttonWidgetAnnotation.pushButton > a {
+	position: absolute;
+	font-size: 1em;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.annotationLayer .linkAnnotation > a:hover,
+.annotationLayer .buttonWidgetAnnotation.pushButton > a:hover {
+	opacity: 0.2;
+	background-color: rgb(255 255 0);
+	box-shadow: 0 2px 10px rgb(255 255 0);
+}
+
+.annotationLayer .linkAnnotation.hasBorder:hover {
+	background-color: rgb(255 255 0 / 0.2);
+}
+
+/* Text annotations (comments/notes) */
+.annotationLayer .textAnnotation img {
+	position: absolute;
+	cursor: pointer;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+}
+
+/* Form widgets */
+.annotationLayer .textWidgetAnnotation input,
+.annotationLayer .textWidgetAnnotation textarea,
+.annotationLayer .choiceWidgetAnnotation select,
+.annotationLayer .buttonWidgetAnnotation.checkBox input,
+.annotationLayer .buttonWidgetAnnotation.radioButton input {
+	background-image: var(--annotation-unfocused-field-background);
+	border: 2px solid var(--input-unfocused-border-color);
+	box-sizing: border-box;
+	font: calc(9px * var(--total-scale-factor)) sans-serif;
+	height: 100%;
+	margin: 0;
+	vertical-align: top;
+	width: 100%;
+}
+
+.annotationLayer .textWidgetAnnotation input:hover,
+.annotationLayer .textWidgetAnnotation textarea:hover,
+.annotationLayer .choiceWidgetAnnotation select:hover,
+.annotationLayer .buttonWidgetAnnotation.checkBox input:hover,
+.annotationLayer .buttonWidgetAnnotation.radioButton input:hover {
+	border: 2px solid var(--input-hover-border-color);
+}
+
+.annotationLayer .textWidgetAnnotation input:focus,
+.annotationLayer .textWidgetAnnotation textarea:focus,
+.annotationLayer .choiceWidgetAnnotation select:focus {
+	background: none;
+	border: 2px solid var(--input-focus-border-color);
+	border-radius: 2px;
+	outline: var(--input-focus-outline);
+}
+
+.annotationLayer .textWidgetAnnotation textarea {
+	resize: none;
+}
+
+.annotationLayer .buttonWidgetAnnotation.radioButton input {
+	border-radius: 50%;
+}
+
+.annotationLayer .buttonWidgetAnnotation.checkBox input,
+.annotationLayer .buttonWidgetAnnotation.radioButton input {
+	appearance: none;
+}
+
+/* Popup annotations */
+.annotationLayer .popupAnnotation {
+	position: absolute;
+	font-size: calc(9px * var(--total-scale-factor));
+	pointer-events: none;
+	width: max-content;
+	max-width: 45%;
+	height: auto;
+}
+
+.annotationLayer .popup {
+	background-color: rgb(255 255 153);
+	box-shadow: 0 calc(2px * var(--total-scale-factor)) calc(5px * var(--total-scale-factor)) rgb(136 136 136);
+	border-radius: calc(2px * var(--total-scale-factor));
+	outline: 1.5px solid rgb(255 255 74);
+	padding: calc(6px * var(--total-scale-factor));
+	cursor: pointer;
+	font: message-box;
+	white-space: normal;
+	word-wrap: break-word;
+	pointer-events: auto;
+}
+
+.annotationLayer .popup > .header {
+	display: inline-block;
+}
+
+.annotationLayer .popup > .header > .title {
+	font-weight: bold;
+}
+
+.annotationLayer .popupContent {
+	border-top: 1px solid rgb(51 51 51);
+	margin-top: calc(2px * var(--total-scale-factor));
+	padding-top: calc(2px * var(--total-scale-factor));
+}
+
+.annotationLayer .popupTriggerArea {
+	cursor: pointer;
+}
 `;

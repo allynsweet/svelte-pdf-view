@@ -20,6 +20,7 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventBus } from './EventBus.js';
 import { PDFPageView, RenderingStates } from './PDFPageView.js';
+import { SimpleLinkService } from './SimpleLinkService.js';
 
 export interface PDFViewerOptions {
 	container: HTMLElement;
@@ -49,6 +50,9 @@ export class PDFViewerCore {
 	private renderingQueue: Set<number> = new Set();
 	private isRendering = false;
 
+	// Link service for annotation navigation
+	private linkService: SimpleLinkService;
+
 	constructor(options: PDFViewerOptions) {
 		this.container = options.container;
 		this.eventBus = options.eventBus ?? new EventBus();
@@ -59,6 +63,11 @@ export class PDFViewerCore {
 		this.viewer = document.createElement('div');
 		this.viewer.className = 'pdfViewer';
 		this.container.appendChild(this.viewer);
+
+		// Create link service for annotation navigation
+		this.linkService = new SimpleLinkService({
+			eventBus: this.eventBus
+		});
 
 		// Setup scroll listener for lazy rendering
 		this.setupScrollListener();
@@ -91,6 +100,10 @@ export class PDFViewerCore {
 		this.pdfDocument = pdfDocument;
 		const numPages = pdfDocument.numPages;
 
+		// Setup link service with document and viewer
+		this.linkService.setDocument(pdfDocument);
+		this.linkService.setViewer(this);
+
 		// Create page views
 		for (let i = 1; i <= numPages; i++) {
 			const page = await pdfDocument.getPage(i);
@@ -105,7 +118,8 @@ export class PDFViewerCore {
 				defaultViewport: viewport,
 				eventBus: this.eventBus,
 				scale: this.currentScale,
-				rotation: this.currentRotation
+				rotation: this.currentRotation,
+				linkService: this.linkService
 			});
 
 			pageView.setPdfPage(page);

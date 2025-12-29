@@ -14,11 +14,13 @@
  */
 
 /**
- * PDFPageView - Renders a single PDF page with canvas and text layer.
+ * PDFPageView - Renders a single PDF page with canvas, text layer, and annotation layer.
  * This is a derivative work based on PDF.js pdf_page_view.js
  */
 import type { PDFPageProxy, PageViewport, TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { EventBus } from './EventBus.js';
+import { AnnotationLayerBuilder } from './AnnotationLayerBuilder.js';
+import type { SimpleLinkService } from './SimpleLinkService.js';
 
 // Dynamically loaded pdfjs utilities
 let setLayerDimensions: typeof import('pdfjs-dist/legacy/build/pdf.mjs').setLayerDimensions;
@@ -37,6 +39,7 @@ export interface PDFPageViewOptions {
 	eventBus: EventBus;
 	scale?: number;
 	rotation?: number;
+	linkService?: SimpleLinkService;
 }
 
 export const RenderingStates = {
@@ -65,6 +68,11 @@ export class PDFPageView {
 	private textLayerDiv: HTMLDivElement | null = null;
 	private loadingDiv: HTMLDivElement | null = null;
 
+	// Annotation layer
+	private linkService: SimpleLinkService | null = null;
+	private annotationLayerBuilder: AnnotationLayerBuilder | null = null;
+	private annotationLayerRendered = false;
+
 	public renderingState: RenderingState = RenderingStates.INITIAL;
 	private renderTask: ReturnType<PDFPageProxy['render']> | null = null;
 
@@ -83,6 +91,7 @@ export class PDFPageView {
 		this.scale = options.scale ?? 1.0;
 		this.rotation = options.rotation ?? 0;
 		this.viewport = options.defaultViewport;
+		this.linkService = options.linkService ?? null;
 
 		// Create page container
 		this.div = document.createElement('div');
@@ -159,6 +168,10 @@ export class PDFPageView {
 				});
 				this.textLayerDiv!.hidden = false;
 			}
+			// Update annotation layer
+			if (this.annotationLayerBuilder && this.annotationLayerRendered) {
+				this.annotationLayerBuilder.update(this.viewport);
+			}
 			// Re-render canvas
 			this.resetCanvas();
 			this.draw();
@@ -207,6 +220,13 @@ export class PDFPageView {
 		this.textLayerRendered = false;
 		this.textDivs = [];
 		this.textContentItemsStr = [];
+
+		// Clear annotation layer
+		if (this.annotationLayerBuilder) {
+			this.annotationLayerBuilder.destroy();
+			this.annotationLayerBuilder = null;
+		}
+		this.annotationLayerRendered = false;
 
 		// Show loading
 		if (this.loadingDiv) {
@@ -260,6 +280,11 @@ export class PDFPageView {
 			// Render text layer for search (only if not already rendered)
 			if (!this.textLayerRendered) {
 				await this.renderTextLayer();
+			}
+
+			// Render annotation layer (only if not already rendered)
+			if (!this.annotationLayerRendered) {
+				await this.renderAnnotationLayer();
 			}
 
 			this.renderingState = RenderingStates.FINISHED;
@@ -334,6 +359,41 @@ export class PDFPageView {
 			});
 		} catch (error) {
 			console.error('Error rendering text layer:', error);
+		}
+	}
+
+	private async renderAnnotationLayer(): Promise<void> {
+		if (!this.pdfPage || !this.linkService) {
+			return;
+		}
+
+		// If annotation layer already rendered, just update it
+		if (this.annotationLayerRendered && this.annotationLayerBuilder) {
+			this.annotationLayerBuilder.update(this.viewport);
+			return;
+		}
+
+		try {
+			this.annotationLayerBuilder = new AnnotationLayerBuilder({
+				pdfPage: this.pdfPage,
+				linkService: this.linkService,
+				renderForms: true,
+				onAppend: (div) => {
+					this.div.appendChild(div);
+				}
+			});
+
+			await this.annotationLayerBuilder.render({
+				viewport: this.viewport
+			});
+			this.annotationLayerRendered = true;
+
+			this.eventBus.dispatch('annotationlayerrendered', {
+				pageNumber: this.id,
+				source: this
+			});
+		} catch (error) {
+			console.error('Error rendering annotation layer:', error);
 		}
 	}
 
