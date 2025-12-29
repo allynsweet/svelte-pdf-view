@@ -316,8 +316,7 @@ interface PdfViewerActions {
 
 ## Use Cases
 
-**Texpile** ([texpile.com](https://texpile.com/)) uses this package to display generated documents (PDFs) directly in the browser. 
-
+**Texpile** ([texpile.com](https://texpile.com/)) uses this package to display generated documents (PDFs) directly in the browser.
 
 ## License
 
@@ -338,5 +337,3 @@ Several files in this project are derivative works based on PDF.js viewer source
 | `renderer-styles.css` | `web/text_layer_builder.css`                            |
 
 These files retain the original Apache 2.0 license headers with attribution to the Mozilla Foundation.
-
-
