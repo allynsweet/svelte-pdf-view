@@ -76,6 +76,7 @@ export const rendererStyles = `
 	align-items: center;
 	padding: 20px;
 	gap: 16px;
+	min-width: fit-content;
 }
 
 /* Page - dynamically created with CSS variables for text layer */
