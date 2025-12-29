@@ -69,6 +69,17 @@
 		viewerState.loading = true;
 		viewerState.error = null;
 
+		// Cleanup previous viewer
+		if (viewer) {
+			viewer.destroy();
+			viewer = null;
+		}
+
+		// Clear any orphaned elements in scroll container
+		scrollContainerEl.innerHTML = '';
+
+		let newViewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
+
 		try {
 			const pdfjs = await getPdfJs();
 			if (!pdfjs) return;
@@ -77,13 +88,9 @@
 			const { FindController } = await import('./pdf-viewer/FindController.js');
 			const { EventBus } = await import('./pdf-viewer/EventBus.js');
 
-			if (viewer) {
-				viewer.destroy();
-			}
-
 			const eventBus = new EventBus();
 
-			const newViewer = new PDFViewerCore({
+			newViewer = new PDFViewerCore({
 				container: scrollContainerEl,
 				eventBus,
 				initialScale: viewerState.scale,
@@ -150,6 +157,13 @@
 			viewer = newViewer;
 			viewerState.loading = false;
 		} catch (e) {
+			// Clean up the viewer that was created before the error
+			if (newViewer) {
+				newViewer.destroy();
+				newViewer = null;
+			}
+			findController = null;
+
 			const errorMessage = e instanceof Error ? e.message : 'Failed to load PDF';
 			viewerState.error = errorMessage;
 			viewerState.loading = false;
