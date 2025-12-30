@@ -21,11 +21,23 @@
  * - Browser fullscreen mode
  * - Black background
  * - Single page view scaled to fit screen
- * - No text layer or toolbar
+ * - Annotation layer for clickable links
  * - Mouse/keyboard/touch navigation
  */
 
-import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { EventBus } from './EventBus.js';
+import { SimpleLinkService } from './SimpleLinkService.js';
+
+// Dynamically imported
+let AnnotationLayer: typeof import('pdfjs-dist/legacy/build/pdf.mjs').AnnotationLayer;
+
+async function ensureAnnotationLayerLoaded() {
+	if (!AnnotationLayer) {
+		const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+		AnnotationLayer = pdfjs.AnnotationLayer;
+	}
+}
 
 export enum PresentationModeState {
 	UNKNOWN = 0,
@@ -50,9 +62,19 @@ export class PdfPresentationMode {
 	private currentPageNumber = 1;
 	private totalPages = 0;
 
+	private hostElement: HTMLDivElement | null = null;
+	private shadowRoot: ShadowRoot | null = null;
 	private container: HTMLDivElement | null = null;
+	private pageWrapper: HTMLDivElement | null = null;
 	private canvas: HTMLCanvasElement | null = null;
+	private annotationLayerDiv: HTMLDivElement | null = null;
 	private callbacks: PresentationModeCallbacks;
+
+	// Annotation layer support
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private annotationLayer: any = null;
+	private linkService: SimpleLinkService | null = null;
+	private eventBus: EventBus | null = null;
 
 	private fullscreenChangeAbortController: AbortController | null = null;
 	private windowAbortController: AbortController | null = null;
@@ -67,6 +89,7 @@ export class PdfPresentationMode {
 	} | null = null;
 
 	private renderingPage = false;
+	private currentViewport: PageViewport | null = null;
 
 	constructor(callbacks: PresentationModeCallbacks = {}) {
 		this.callbacks = callbacks;
@@ -198,40 +221,145 @@ export class PdfPresentationMode {
 	// Private methods
 
 	private createPresentationContainer(): void {
-		// Create fullscreen container
-		this.container = document.createElement('div');
-		this.container.className = 'pdf-presentation-mode';
-		this.container.style.cssText = `
+		// Create event bus and link service for annotations
+		this.eventBus = new EventBus();
+		this.linkService = new SimpleLinkService({
+			eventBus: this.eventBus
+		});
+
+		// Override goToPage to navigate within presentation
+		const originalGoToPage = this.linkService.goToPage.bind(this.linkService);
+		this.linkService.goToPage = (pageNumber: number) => {
+			// Navigate within presentation mode
+			this.goToPage(pageNumber);
+			// Also call original for event dispatch
+			originalGoToPage(pageNumber);
+		};
+
+		// Set pagesCount getter for link service
+		Object.defineProperty(this.linkService, 'pagesCount', {
+			get: () => this.totalPages
+		});
+
+		// Create host element for Shadow DOM
+		this.hostElement = document.createElement('div');
+		this.hostElement.style.cssText = `
 			position: fixed;
 			top: 0;
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background-color: #000;
-			display: flex;
-			align-items: center;
-			justify-content: center;
 			z-index: 999999;
 		`;
 
+		// Create Shadow DOM
+		this.shadowRoot = this.hostElement.attachShadow({ mode: 'open' });
+
+		// Inject styles into Shadow DOM
+		const styleEl = document.createElement('style');
+		styleEl.textContent = this.getPresentationStyles();
+		this.shadowRoot.appendChild(styleEl);
+
+		// Create fullscreen container inside Shadow DOM
+		this.container = document.createElement('div');
+		this.container.className = 'pdf-presentation-container';
+
+		// Create page wrapper (holds canvas + annotation layer)
+		this.pageWrapper = document.createElement('div');
+		this.pageWrapper.className = 'page-wrapper';
+
 		// Create canvas for rendering
 		this.canvas = document.createElement('canvas');
-		this.canvas.style.cssText = `
-			max-width: 100%;
-			max-height: 100%;
-			object-fit: contain;
-		`;
+		this.canvas.className = 'presentation-canvas';
 
-		this.container.appendChild(this.canvas);
-		document.body.appendChild(this.container);
+		// Create annotation layer div
+		this.annotationLayerDiv = document.createElement('div');
+		this.annotationLayerDiv.className = 'annotationLayer';
+
+		this.pageWrapper.appendChild(this.canvas);
+		this.pageWrapper.appendChild(this.annotationLayerDiv);
+		this.container.appendChild(this.pageWrapper);
+		this.shadowRoot.appendChild(this.container);
+		document.body.appendChild(this.hostElement);
+	}
+
+	private getPresentationStyles(): string {
+		return `
+			.pdf-presentation-container {
+				width: 100%;
+				height: 100%;
+				background-color: #000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.page-wrapper {
+				position: relative;
+			}
+
+			.presentation-canvas {
+				display: block;
+				position: relative;
+				z-index: 0;
+			}
+
+			.annotationLayer {
+				position: absolute;
+				top: 0;
+				left: 0;
+				pointer-events: none;
+				transform-origin: 0 0;
+				z-index: 1;
+			}
+
+			.annotationLayer section {
+				position: absolute;
+				text-align: initial;
+				pointer-events: auto;
+				box-sizing: border-box;
+				transform-origin: 0 0;
+				user-select: none;
+			}
+
+			.annotationLayer .linkAnnotation > a,
+			.annotationLayer .buttonWidgetAnnotation.pushButton > a {
+				position: absolute;
+				font-size: 1em;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+			}
+
+			.annotationLayer .linkAnnotation > a:hover,
+			.annotationLayer .buttonWidgetAnnotation.pushButton > a:hover {
+				opacity: 0.2;
+				background-color: rgb(255 255 0);
+				box-shadow: 0 2px 10px rgb(255 255 0);
+			}
+
+			.annotationLayer .linkAnnotation.hasBorder:hover {
+				background-color: rgb(255 255 0 / 0.2);
+			}
+		`;
 	}
 
 	private destroyPresentationContainer(): void {
-		if (this.container) {
-			this.container.remove();
+		if (this.hostElement) {
+			this.hostElement.remove();
+			this.hostElement = null;
+			this.shadowRoot = null;
 			this.container = null;
+			this.pageWrapper = null;
 			this.canvas = null;
+			this.annotationLayerDiv = null;
 		}
+		this.annotationLayer = null;
+		this.linkService = null;
+		this.eventBus?.destroy();
+		this.eventBus = null;
+		this.currentViewport = null;
 	}
 
 	private async renderCurrentPage(): Promise<void> {
@@ -258,6 +386,7 @@ export class PdfPresentationMode {
 			const scale = Math.min(scaleX, scaleY);
 
 			const scaledViewport = page.getViewport({ scale, rotation: 0 });
+			this.currentViewport = scaledViewport;
 
 			// Set canvas size
 			this.canvas.width = scaledViewport.width;
@@ -277,10 +406,85 @@ export class PdfPresentationMode {
 				viewport: scaledViewport,
 				canvas: this.canvas
 			}).promise;
+
+			// Set page wrapper size to match canvas
+			if (this.pageWrapper) {
+				this.pageWrapper.style.width = `${this.canvas.width}px`;
+				this.pageWrapper.style.height = `${this.canvas.height}px`;
+			}
+
+			// Render annotation layer
+			await this.renderAnnotationLayer(page, scaledViewport);
 		} catch (e) {
 			console.error('Failed to render presentation page:', e);
 		} finally {
 			this.renderingPage = false;
+		}
+	}
+
+	private async renderAnnotationLayer(page: PDFPageProxy, viewport: PageViewport): Promise<void> {
+		if (!this.annotationLayerDiv || !this.linkService) {
+			return;
+		}
+
+		try {
+			await ensureAnnotationLayerLoaded();
+
+			// Clear previous annotations
+			this.annotationLayerDiv.innerHTML = '';
+
+			const width = Math.floor(viewport.width);
+			const height = Math.floor(viewport.height);
+
+			// Set CSS variables that PDF.js AnnotationLayer expects
+			// (it uses these for CSS round() function in dimensions)
+			this.annotationLayerDiv.style.setProperty('--scale-factor', '1');
+			this.annotationLayerDiv.style.setProperty('--total-scale-factor', '1');
+			this.annotationLayerDiv.style.setProperty('--scale-round-x', '1px');
+			this.annotationLayerDiv.style.setProperty('--scale-round-y', '1px');
+
+			// Get annotations
+			const annotations = await page.getAnnotations({ intent: 'display' });
+			if (annotations.length === 0) {
+				return;
+			}
+
+			// Set document on link service
+			this.linkService.setDocument(this.pdfDocument);
+
+			// Create annotation layer
+			this.annotationLayer = new AnnotationLayer({
+				div: this.annotationLayerDiv,
+				accessibilityManager: null,
+				annotationCanvasMap: null,
+				annotationEditorUIManager: null,
+				page: page,
+				viewport: viewport.clone({ dontFlip: true }),
+				structTreeLayer: null,
+				commentManager: null,
+				linkService: this.linkService,
+				annotationStorage: null
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any);
+
+			// Render annotations
+			await this.annotationLayer.render({
+				annotations,
+				imageResourcesPath: '',
+				renderForms: false, // No forms in presentation mode
+				linkService: this.linkService,
+				downloadManager: undefined,
+				annotationStorage: null,
+				enableScripting: false,
+				hasJSActions: false,
+				fieldObjects: null
+			});
+
+			// Override dimensions AFTER render (PDF.js sets CSS variable-based dimensions)
+			this.annotationLayerDiv.style.width = `${width}px`;
+			this.annotationLayerDiv.style.height = `${height}px`;
+		} catch (e) {
+			console.error('Failed to render presentation annotation layer:', e);
 		}
 	}
 
@@ -357,6 +561,13 @@ export class PdfPresentationMode {
 	}
 
 	private handleMouseDown = (evt: MouseEvent): void => {
+		// Check if click is on an annotation link
+		const target = evt.target as HTMLElement;
+		if (target.closest('.annotationLayer a')) {
+			// Don't interfere with link clicks
+			return;
+		}
+
 		// Left click (0) = next page, Right click (2) = previous page
 		if (evt.button === 0) {
 			evt.preventDefault();
