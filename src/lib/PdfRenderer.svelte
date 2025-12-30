@@ -6,6 +6,7 @@
 		type PdfViewerActions,
 		type PdfSource
 	} from './pdf-viewer/context.js';
+	import type { EventBus } from './pdf-viewer/EventBus.js';
 	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
 	import { PdfPresentationMode } from './pdf-viewer/PdfPresentationMode.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
@@ -13,6 +14,8 @@
 	interface Props {
 		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob. If not provided, uses src from PdfViewer context. */
 		src?: PdfSource;
+		/** Custom EventBus instance for PDF.js event handling. If not provided, a new EventBus will be created. */
+		eventBus?: EventBus;
 		/** Background color of the scroll container */
 		backgroundColor?: string;
 		/** Page shadow style */
@@ -29,6 +32,7 @@
 
 	let {
 		src: srcProp,
+		eventBus: eventBusProp,
 		backgroundColor = '#e8e8e8',
 		pageShadow = '0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08)',
 		scrollbarTrackColor = '#f1f1f1',
@@ -86,9 +90,15 @@
 
 			const { PDFViewerCore } = await import('./pdf-viewer/PDFViewerCore.js');
 			const { FindController } = await import('./pdf-viewer/FindController.js');
-			const { EventBus } = await import('./pdf-viewer/EventBus.js');
 
-			const eventBus = new EventBus();
+			// Use provided eventBus or create a new one
+			let eventBus: EventBus;
+			if (eventBusProp) {
+				eventBus = eventBusProp;
+			} else {
+				const { EventBus: EventBusClass } = await import('./pdf-viewer/EventBus.js');
+				eventBus = new EventBusClass();
+			}
 
 			newViewer = new PDFViewerCore({
 				container: scrollContainerEl,

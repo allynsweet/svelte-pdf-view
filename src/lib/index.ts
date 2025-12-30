@@ -19,3 +19,6 @@ export {
 
 // Export PDF.js singleton utilities
 export { destroyPdfJs } from './pdf-viewer/pdfjs-singleton.js';
+
+// Export EventBus for custom event handling
+export { EventBus, type EventListener } from './pdf-viewer/EventBus.js';
