@@ -21,12 +21,14 @@ import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventBus } from './EventBus.js';
 import { PDFPageView, RenderingStates } from './PDFPageView.js';
 import { SimpleLinkService } from './SimpleLinkService.js';
+import type { BoundingBox } from './BoundingBoxLayer.js';
 
 export interface PDFViewerOptions {
 	container: HTMLElement;
 	eventBus?: EventBus;
 	initialScale?: number;
 	initialRotation?: number;
+	boundingBoxes?: BoundingBox[];
 }
 
 const DEFAULT_SCALE = 1.0;
@@ -53,11 +55,15 @@ export class PDFViewerCore {
 	// Link service for annotation navigation
 	private linkService: SimpleLinkService;
 
+	// Bounding boxes
+	private boundingBoxes: BoundingBox[] = [];
+
 	constructor(options: PDFViewerOptions) {
 		this.container = options.container;
 		this.eventBus = options.eventBus ?? new EventBus();
 		this.currentScale = options.initialScale ?? DEFAULT_SCALE;
 		this.currentRotation = options.initialRotation ?? 0;
+		this.boundingBoxes = options.boundingBoxes ?? [];
 
 		// Create viewer div inside container
 		this.viewer = document.createElement('div');
@@ -119,7 +125,8 @@ export class PDFViewerCore {
 				eventBus: this.eventBus,
 				scale: this.currentScale,
 				rotation: this.currentRotation,
-				linkService: this.linkService
+				linkService: this.linkService,
+				boundingBoxes: this.boundingBoxes
 			});
 
 			pageView.setPdfPage(page);
@@ -284,6 +291,18 @@ export class PDFViewerCore {
 
 	getPageView(pageIndex: number): PDFPageView | undefined {
 		return this.pages[pageIndex];
+	}
+
+	/**
+	 * Update bounding boxes for all pages
+	 * @param boxes - New array of bounding boxes
+	 */
+	updateBoundingBoxes(boxes: BoundingBox[]): void {
+		this.boundingBoxes = boxes;
+		// Update all existing pages
+		for (const page of this.pages) {
+			page.updateBoundingBoxes(boxes);
+		}
 	}
 
 	cleanup(): void {

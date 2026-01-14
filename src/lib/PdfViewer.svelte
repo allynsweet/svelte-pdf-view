@@ -13,6 +13,7 @@
 		type PdfViewerActions,
 		type PdfSource
 	} from './pdf-viewer/context.js';
+	import type { BoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
 
 	interface Props {
 		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob */
@@ -25,6 +26,8 @@
 		onerror?: (error: string) => void;
 		/** CSS class for the container */
 		class?: string;
+		/** Bounding boxes to render on PDF pages */
+		boundingBoxes?: BoundingBox[];
 		/** Children (toolbar and renderer) */
 		children?: Snippet;
 	}
@@ -35,6 +38,7 @@
 		downloadFilename,
 		onerror,
 		class: className = '',
+		boundingBoxes = [],
 		children
 	}: Props = $props();
 
@@ -129,6 +133,9 @@
 			if (rendererActions) {
 				await rendererActions.exitPresentationMode();
 			}
+		},
+		updateBoundingBoxes: (boxes: BoundingBox[]) => {
+			rendererActions?.updateBoundingBoxes(boxes);
 		}
 	};
 
@@ -138,6 +145,9 @@
 		actions,
 		get src() {
 			return src;
+		},
+		get boundingBoxes() {
+			return boundingBoxes;
 		},
 		_registerRenderer: (renderer: PdfViewerActions) => {
 			rendererActions = renderer;

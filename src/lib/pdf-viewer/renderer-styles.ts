@@ -357,4 +357,19 @@ export const rendererStyles = `
 .annotationLayer .popupTriggerArea {
 	cursor: pointer;
 }
+
+/* Bounding Box Layer - for custom overlays and annotations */
+.boundingBoxLayer {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 4;
+}
+
+.boundingBoxLayer .boundingBox {
+	position: absolute;
+	box-sizing: border-box;
+	pointer-events: none;
+	transition: opacity 0.2s ease-in-out;
+}
 `;
