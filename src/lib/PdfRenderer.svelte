@@ -42,6 +42,8 @@
 
 	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
 	let src = $derived(srcProp ?? context.src);
+	// Get bounding boxes from context
+	let boundingBoxes = $derived(context.boundingBoxes);
 
 	let hostEl: HTMLDivElement | undefined = $state();
 	let shadowRoot: ShadowRoot | null = null;
@@ -94,7 +96,8 @@
 				container: scrollContainerEl,
 				eventBus,
 				initialScale: viewerState.scale,
-				initialRotation: viewerState.rotation
+				initialRotation: viewerState.rotation,
+				boundingBoxes: boundingBoxes
 			});
 
 			findController = new FindController(newViewer, eventBus);
@@ -210,6 +213,9 @@
 		},
 		exitPresentationMode: async () => {
 			await presentationMode.exit();
+		},
+		updateBoundingBoxes: (boxes) => {
+			viewer?.updateBoundingBoxes(boxes);
 		}
 	};
 

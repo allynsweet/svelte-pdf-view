@@ -21,6 +21,7 @@ import type { PDFPageProxy, PageViewport, TextLayer } from 'pdfjs-dist/legacy/bu
 import type { EventBus } from './EventBus.js';
 import { AnnotationLayerBuilder } from './AnnotationLayerBuilder.js';
 import type { SimpleLinkService } from './SimpleLinkService.js';
+import { BoundingBoxLayer, type BoundingBox } from './BoundingBoxLayer.js';
 
 // Dynamically loaded pdfjs utilities
 let setLayerDimensions: typeof import('pdfjs-dist/legacy/build/pdf.mjs').setLayerDimensions;
@@ -40,6 +41,7 @@ export interface PDFPageViewOptions {
 	scale?: number;
 	rotation?: number;
 	linkService?: SimpleLinkService;
+	boundingBoxes?: BoundingBox[];
 }
 
 export const RenderingStates = {
@@ -73,6 +75,11 @@ export class PDFPageView {
 	private annotationLayerBuilder: AnnotationLayerBuilder | null = null;
 	private annotationLayerRendered = false;
 
+	// Bounding box layer
+	private boundingBoxLayer: BoundingBoxLayer | null = null;
+	private boundingBoxes: BoundingBox[] = [];
+	private boundingBoxLayerRendered = false;
+
 	public renderingState: RenderingState = RenderingStates.INITIAL;
 	private renderTask: ReturnType<PDFPageProxy['render']> | null = null;
 
@@ -92,6 +99,7 @@ export class PDFPageView {
 		this.rotation = options.rotation ?? 0;
 		this.viewport = options.defaultViewport;
 		this.linkService = options.linkService ?? null;
+		this.boundingBoxes = options.boundingBoxes ?? [];
 
 		// Create page container
 		this.div = document.createElement('div');
@@ -172,6 +180,10 @@ export class PDFPageView {
 			if (this.annotationLayerBuilder && this.annotationLayerRendered) {
 				this.annotationLayerBuilder.update(this.viewport);
 			}
+			// Update bounding box layer
+			if (this.boundingBoxLayer && this.boundingBoxLayerRendered) {
+				this.boundingBoxLayer.update(this.viewport, this.boundingBoxes);
+			}
 			// Re-render canvas
 			this.resetCanvas();
 			this.draw();
@@ -227,6 +239,13 @@ export class PDFPageView {
 			this.annotationLayerBuilder = null;
 		}
 		this.annotationLayerRendered = false;
+
+		// Clear bounding box layer
+		if (this.boundingBoxLayer) {
+			this.boundingBoxLayer.destroy();
+			this.boundingBoxLayer = null;
+		}
+		this.boundingBoxLayerRendered = false;
 
 		// Show loading
 		if (this.loadingDiv) {
@@ -285,6 +304,11 @@ export class PDFPageView {
 			// Render annotation layer (only if not already rendered)
 			if (!this.annotationLayerRendered) {
 				await this.renderAnnotationLayer();
+			}
+
+			// Render bounding box layer (only if not already rendered)
+			if (!this.boundingBoxLayerRendered) {
+				this.renderBoundingBoxLayer();
 			}
 
 			this.renderingState = RenderingStates.FINISHED;
@@ -397,10 +421,57 @@ export class PDFPageView {
 		}
 	}
 
+	private renderBoundingBoxLayer(): void {
+		// If bounding box layer already rendered, just update it
+		if (this.boundingBoxLayerRendered && this.boundingBoxLayer) {
+			this.boundingBoxLayer.update(this.viewport, this.boundingBoxes);
+			return;
+		}
+
+		// Only render if we have boxes for this page
+		const pageBoxes = this.boundingBoxes.filter((box) => box.page === this.id);
+		if (pageBoxes.length === 0) {
+			return;
+		}
+
+		try {
+			this.boundingBoxLayer = new BoundingBoxLayer({
+				container: this.div,
+				viewport: this.viewport,
+				boxes: this.boundingBoxes,
+				pageNumber: this.id
+			});
+
+			this.boundingBoxLayer.render();
+			this.boundingBoxLayerRendered = true;
+
+			this.eventBus.dispatch('boundingboxlayerrendered', {
+				pageNumber: this.id,
+				source: this
+			});
+		} catch (error) {
+			console.error('Error rendering bounding box layer:', error);
+		}
+	}
+
 	cancelRendering(): void {
 		if (this.renderTask) {
 			this.renderTask.cancel();
 			this.renderTask = null;
+		}
+	}
+
+	/**
+	 * Update bounding boxes for this page
+	 * @param boxes - New array of bounding boxes
+	 */
+	updateBoundingBoxes(boxes: BoundingBox[]): void {
+		this.boundingBoxes = boxes;
+		if (this.boundingBoxLayer && this.boundingBoxLayerRendered) {
+			this.boundingBoxLayer.update(this.viewport, this.boundingBoxes);
+		} else if (this.renderingState === RenderingStates.FINISHED) {
+			// Render for the first time if page is already rendered
+			this.renderBoundingBoxLayer();
 		}
 	}
 

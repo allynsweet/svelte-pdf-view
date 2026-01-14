@@ -2,6 +2,7 @@
  * PDF Viewer Context - Shared state between toolbar and renderer
  */
 import { getContext, setContext } from 'svelte';
+import type { BoundingBox } from './BoundingBoxLayer.js';
 
 const PDF_VIEWER_CONTEXT_KEY = Symbol('pdf-viewer');
 
@@ -53,6 +54,8 @@ export interface PdfViewerActions {
 	enterPresentationMode: () => Promise<boolean>;
 	/** Exit fullscreen presentation mode */
 	exitPresentationMode: () => Promise<void>;
+	/** Update bounding boxes */
+	updateBoundingBoxes: (boxes: BoundingBox[]) => void;
 }
 
 export interface PdfViewerContext {
@@ -60,6 +63,8 @@ export interface PdfViewerContext {
 	actions: PdfViewerActions;
 	/** The PDF source - shared from PdfViewer to PdfRenderer */
 	src: PdfSource;
+	/** Bounding boxes to render on PDF pages */
+	boundingBoxes: BoundingBox[];
 	// For internal use - allows renderer to register itself
 	_registerRenderer: (renderer: PdfViewerActions) => void;
 	// For internal use - error callback from PdfViewer
