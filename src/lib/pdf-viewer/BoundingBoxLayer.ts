@@ -24,6 +24,8 @@ export interface BoundingBox {
 	opacity?: number;
 	/** Optional border width in pixels */
 	borderWidth?: number;
+	/** Optional border radius in pixels */
+	borderRadius?: number;
 	/** Optional custom class name for styling */
 	className?: string;
 	/** Optional ID for programmatic access */
@@ -141,6 +143,11 @@ export class BoundingBoxLayer {
 		boxDiv.style.opacity = String(opacity);
 		boxDiv.style.pointerEvents = 'none'; // Don't interfere with PDF interaction
 		boxDiv.style.boxSizing = 'border-box';
+
+		// Apply border radius if specified
+		if (box.borderRadius !== undefined) {
+			boxDiv.style.borderRadius = `${box.borderRadius}px`;
+		}
 
 		this.layerDiv.appendChild(boxDiv);
 

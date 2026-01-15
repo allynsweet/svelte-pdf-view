@@ -25,6 +25,7 @@
 			borderColor: '#ff0000',
 			fillColor: 'rgba(255, 0, 0, 0.1)',
 			borderWidth: 2,
+			borderRadius: 8,
 			id: 'demo-box-1'
 		},
 		{
@@ -36,6 +37,7 @@
 			borderColor: '#0000ff',
 			fillColor: 'rgba(0, 0, 255, 0.2)',
 			borderWidth: 2,
+			borderRadius: 12,
 			id: 'demo-box-2'
 		}
 	]);
@@ -111,6 +113,7 @@
 			borderColor: randomColor,
 			fillColor: `${randomColor}33`,
 			borderWidth: 2,
+			borderRadius: Math.floor(Math.random() * 20),
 			id: `box-${Date.now()}`
 		};
 
@@ -132,6 +135,7 @@
 				borderColor: '#ff0000',
 				fillColor: 'rgba(255, 0, 0, 0.1)',
 				borderWidth: 2,
+				borderRadius: 8,
 				id: 'demo-box-1'
 			},
 			{
@@ -143,6 +147,7 @@
 				borderColor: '#0000ff',
 				fillColor: 'rgba(0, 0, 255, 0.2)',
 				borderWidth: 2,
+				borderRadius: 12,
 				id: 'demo-box-2'
 			}
 		];

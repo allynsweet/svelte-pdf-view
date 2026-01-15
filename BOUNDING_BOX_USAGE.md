@@ -36,6 +36,7 @@ const boundingBoxes: BoundingBox[] = [
 		fillColor: 'rgba(255, 0, 0, 0.1)', // Optional: fill color (default: transparent)
 		opacity: 1.0, // Optional: opacity (default: 1.0)
 		borderWidth: 2, // Optional: border width in pixels (default: 2)
+		borderRadius: 8, // Optional: border radius in pixels (default: undefined)
 		className: 'my-custom-box', // Optional: custom CSS class
 		id: 'box-1' // Optional: ID for programmatic access
 	},
@@ -46,7 +47,8 @@ const boundingBoxes: BoundingBox[] = [
 		width: 200,
 		height: 150,
 		borderColor: '#0000ff',
-		fillColor: 'rgba(0, 0, 255, 0.2)'
+		fillColor: 'rgba(0, 0, 255, 0.2)',
+		borderRadius: 12 // Rounded corners
 	}
 ];
 ```
@@ -166,14 +168,15 @@ The bounding box system automatically handles this transformation. When you spec
 
 All style properties are optional and have sensible defaults:
 
-| Property      | Type     | Default         | Description            |
-| ------------- | -------- | --------------- | ---------------------- |
-| `borderColor` | `string` | `'#ff0000'`     | CSS color for border   |
-| `fillColor`   | `string` | `'transparent'` | CSS color for fill     |
-| `opacity`     | `number` | `1.0`           | Opacity (0-1)          |
-| `borderWidth` | `number` | `2`             | Border width in pixels |
-| `className`   | `string` | `undefined`     | Custom CSS class       |
-| `id`          | `string` | `undefined`     | Unique identifier      |
+| Property       | Type     | Default         | Description             |
+| -------------- | -------- | --------------- | ----------------------- |
+| `borderColor`  | `string` | `'#ff0000'`     | CSS color for border    |
+| `fillColor`    | `string` | `'transparent'` | CSS color for fill      |
+| `opacity`      | `number` | `1.0`           | Opacity (0-1)           |
+| `borderWidth`  | `number` | `2`             | Border width in pixels  |
+| `borderRadius` | `number` | `undefined`     | Border radius in pixels |
+| `className`    | `string` | `undefined`     | Custom CSS class        |
+| `id`           | `string` | `undefined`     | Unique identifier       |
 
 ## Multiple Pages
 
