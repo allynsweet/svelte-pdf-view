@@ -1,11 +1,38 @@
 <script lang="ts">
 	import { base } from '$app/paths';
-	import { PdfViewer, PdfToolbar, PdfRenderer, type PdfSource } from '$lib/index.js';
+	import { PdfViewer, PdfToolbar, PdfRenderer, type PdfSource, type BoundingBox } from '$lib/index.js';
 
 	const defaultPdf = `${base}/Demo.pdf`;
 	let pdfSource: PdfSource = $state(defaultPdf);
 	let sourceType = $state<'url' | 'arraybuffer' | 'uint8array' | 'blob'>('url');
 	let loadError = $state<string | null>(null);
+
+	// Bounding boxes demo
+	let showBoundingBoxes = $state(false);
+	let boundingBoxes = $state<BoundingBox[]>([
+		{
+			page: 1,
+			x: 100,
+			y: 500,
+			width: 200,
+			height: 100,
+			borderColor: '#ff0000',
+			fillColor: 'rgba(255, 0, 0, 0.1)',
+			borderWidth: 2,
+			id: 'demo-box-1'
+		},
+		{
+			page: 1,
+			x: 350,
+			y: 300,
+			width: 150,
+			height: 80,
+			borderColor: '#0000ff',
+			fillColor: 'rgba(0, 0, 255, 0.2)',
+			borderWidth: 2,
+			id: 'demo-box-2'
+		}
+	]);
 
 	function resetToDefault() {
 		pdfSource = defaultPdf;
@@ -60,6 +87,60 @@
 		console.error('PDF Error (from callback):', error);
 		loadError = `Callback received: ${error}`;
 	}
+
+	function toggleBoundingBoxes() {
+		showBoundingBoxes = !showBoundingBoxes;
+	}
+
+	function addRandomBoundingBox() {
+		const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+		const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+		const newBox: BoundingBox = {
+			page: 1,
+			x: Math.random() * 400 + 50,
+			y: Math.random() * 500 + 100,
+			width: Math.random() * 150 + 50,
+			height: Math.random() * 100 + 50,
+			borderColor: randomColor,
+			fillColor: `${randomColor}33`,
+			borderWidth: 2,
+			id: `box-${Date.now()}`
+		};
+
+		boundingBoxes = [...boundingBoxes, newBox];
+	}
+
+	function clearBoundingBoxes() {
+		boundingBoxes = [];
+	}
+
+	function resetBoundingBoxes() {
+		boundingBoxes = [
+			{
+				page: 1,
+				x: 100,
+				y: 500,
+				width: 200,
+				height: 100,
+				borderColor: '#ff0000',
+				fillColor: 'rgba(255, 0, 0, 0.1)',
+				borderWidth: 2,
+				id: 'demo-box-1'
+			},
+			{
+				page: 1,
+				x: 350,
+				y: 300,
+				width: 150,
+				height: 80,
+				borderColor: '#0000ff',
+				fillColor: 'rgba(0, 0, 255, 0.2)',
+				borderWidth: 2,
+				id: 'demo-box-2'
+			}
+		];
+	}
 </script>
 
 <div class="demo">
@@ -86,13 +167,26 @@
 			</button>
 			<button onclick={loadInvalidPdf} class="error-btn">Test Error Handling</button>
 		</div>
+		<div class="bounding-box-controls">
+			<strong>Bounding Boxes:</strong>
+			<button onclick={toggleBoundingBoxes} class="bbox-btn">
+				{showBoundingBoxes ? 'Hide' : 'Show'} Boxes ({boundingBoxes.length})
+			</button>
+			<button onclick={addRandomBoundingBox} class="bbox-btn">Add Random Box</button>
+			<button onclick={resetBoundingBoxes} class="bbox-btn">Reset Boxes</button>
+			<button onclick={clearBoundingBoxes} class="bbox-btn">Clear All</button>
+		</div>
 		{#if loadError}
 			<div class="local-error">Local Error: {loadError}</div>
 		{/if}
 	</div>
 
 	<div class="viewer-container">
-		<PdfViewer src={pdfSource} onerror={handlePdfError}>
+		<PdfViewer
+			src={pdfSource}
+			onerror={handlePdfError}
+			boundingBoxes={showBoundingBoxes ? boundingBoxes : []}
+		>
 			<PdfToolbar />
 			<PdfRenderer
 				backgroundColor="#e8e8e8"
@@ -150,6 +244,27 @@
 
 	.buttons button:hover {
 		background: #e5e5e5;
+	}
+
+	.bounding-box-controls {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		margin-top: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.bbox-btn {
+		padding: 0.5rem 1rem;
+		border: 1px solid #4f46e5;
+		border-radius: 4px;
+		background: #eef2ff;
+		cursor: pointer;
+		color: #4f46e5;
+	}
+
+	.bbox-btn:hover {
+		background: #ddd6fe;
 	}
 
 	.error-btn {
