@@ -9,6 +9,7 @@
 		type NormalizedBoundingBox,
 		convertNormalizedBoundingBoxes
 	} from '$lib/index.js';
+	import ScrollDemo from './ScrollDemo.svelte';
 
 	const defaultPdf = `${base}/Demo.pdf`;
 	let pdfSource: PdfSource = $state(defaultPdf);
@@ -227,6 +228,7 @@
 			boundingBoxes={showBoundingBoxes ? boundingBoxes : []}
 		>
 			<PdfToolbar />
+			<ScrollDemo boundingBoxes={showBoundingBoxes ? boundingBoxes : []} />
 			<PdfRenderer
 				backgroundColor="#e8e8e8"
 				scrollbarThumbColor="#c1c1c1"

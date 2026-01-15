@@ -136,6 +136,9 @@
 		},
 		updateBoundingBoxes: (boxes: BoundingBox[]) => {
 			rendererActions?.updateBoundingBoxes(boxes);
+		},
+		scrollToBoundingBox: (box: BoundingBox) => {
+			rendererActions?.scrollToBoundingBox(box);
 		}
 	};
 

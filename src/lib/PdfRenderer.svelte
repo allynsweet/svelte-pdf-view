@@ -216,6 +216,9 @@
 		},
 		updateBoundingBoxes: (boxes) => {
 			viewer?.updateBoundingBoxes(boxes);
+		},
+		scrollToBoundingBox: (box) => {
+			viewer?.scrollToBoundingBox(box);
 		}
 	};
 

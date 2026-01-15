@@ -280,6 +280,39 @@ export class PDFViewerCore {
 		this.eventBus.dispatch('pagechanged', { pageNumber });
 	}
 
+	/**
+	 * Scroll to a bounding box and center it in the viewport
+	 * @param box - The bounding box to scroll to
+	 */
+	scrollToBoundingBox(box: BoundingBox): void {
+		if (box.page < 1 || box.page > this.pages.length) return;
+
+		const pageView = this.pages[box.page - 1];
+		const containerRect = this.container.getBoundingClientRect();
+
+		// Calculate the page's offset from the top of the scroll container
+		let pageOffsetTop = 0;
+		for (let i = 0; i < box.page - 1; i++) {
+			pageOffsetTop += this.pages[i].height + 10; // 10px margin
+		}
+
+		// Calculate the center of the bounding box in the page
+		// Note: box.y is in PDF coordinates (bottom-origin), but we need screen coordinates (top-origin)
+		const boxCenterY = box.y + box.height / 2;
+
+		// Calculate the scroll position to center the bounding box
+		// We want: boxCenterY to be at the center of the viewport
+		const targetScrollTop = pageOffsetTop + boxCenterY - containerRect.height / 2;
+
+		// Smooth scroll to the target position
+		this.container.scrollTo({
+			top: targetScrollTop,
+			behavior: 'smooth'
+		});
+
+		this.eventBus.dispatch('pagechanged', { pageNumber: box.page });
+	}
+
 	get pagesCount(): number {
 		return this.pages.length;
 	}

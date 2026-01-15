@@ -56,6 +56,8 @@ export interface PdfViewerActions {
 	exitPresentationMode: () => Promise<void>;
 	/** Update bounding boxes */
 	updateBoundingBoxes: (boxes: BoundingBox[]) => void;
+	/** Scroll to a bounding box and center it in the viewport */
+	scrollToBoundingBox: (box: BoundingBox) => void;
 }
 
 export interface PdfViewerContext {
