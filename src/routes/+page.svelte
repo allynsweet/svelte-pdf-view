@@ -5,7 +5,9 @@
 		PdfToolbar,
 		PdfRenderer,
 		type PdfSource,
-		type BoundingBox
+		type BoundingBox,
+		type NormalizedBoundingBox,
+		convertNormalizedBoundingBoxes
 	} from '$lib/index.js';
 
 	const defaultPdf = `${base}/Demo.pdf`;
@@ -41,6 +43,32 @@
 			id: 'demo-box-2'
 		}
 	]);
+
+	/* Example: Using Normalized Bounding Boxes (0-100 coordinates)
+	 * If you have bounding boxes in percentage format (0-100), you can convert them:
+	 *
+	 * const normalizedBoxes: NormalizedBoundingBox[] = [
+	 *   {
+	 *     page: 1,
+	 *     x_min: 10,   // 10% from left
+	 *     x_max: 40,   // 40% from left
+	 *     y_min: 20,   // 20% from top
+	 *     y_max: 35,   // 35% from top
+	 *     borderColor: '#00ff00',
+	 *     fillColor: 'rgba(0, 255, 0, 0.2)',
+	 *     borderRadius: 8
+	 *   }
+	 * ];
+	 *
+	 * // Convert to PDF coordinates (assuming standard US Letter: 612x792 points)
+	 * const convertedBoxes = convertNormalizedBoundingBoxes(normalizedBoxes, 612, 792);
+	 * boundingBoxes = convertedBoxes;
+	 *
+	 * Note: Page dimensions vary by PDF. Common sizes:
+	 * - US Letter: 612 x 792 points
+	 * - A4: 595 x 842 points
+	 * - Legal: 612 x 1008 points
+	 */
 
 	function resetToDefault() {
 		pdfSource = defaultPdf;

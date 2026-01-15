@@ -4,6 +4,34 @@
  */
 import type { PageViewport } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
+/** Normalized bounding box with percentage-based coordinates (0-100) */
+export interface NormalizedBoundingBox {
+	/** Page number (1-indexed) */
+	page: number;
+	/** Minimum X coordinate (0-100, percentage of page width) */
+	x_min: number;
+	/** Maximum X coordinate (0-100, percentage of page width) */
+	x_max: number;
+	/** Minimum Y coordinate (0-100, percentage of page height, from top) */
+	y_min: number;
+	/** Maximum Y coordinate (0-100, percentage of page height, from top) */
+	y_max: number;
+	/** Optional border color (CSS color string) */
+	borderColor?: string;
+	/** Optional fill color (CSS color string) */
+	fillColor?: string;
+	/** Optional opacity (0-1) */
+	opacity?: number;
+	/** Optional border width in pixels */
+	borderWidth?: number;
+	/** Optional border radius in pixels */
+	borderRadius?: number;
+	/** Optional custom class name for styling */
+	className?: string;
+	/** Optional ID for programmatic access */
+	id?: string;
+}
+
 /** Bounding box definition with coordinates and optional styles */
 export interface BoundingBox {
 	/** Page number (1-indexed) */
@@ -196,4 +224,47 @@ export class BoundingBoxLayer {
 	getBoxElement(id: string): HTMLDivElement | undefined {
 		return this.boxElements.get(id);
 	}
+}
+
+/**
+ * Convert normalized bounding boxes (0-100 percentage) to PDF coordinate space
+ * @param normalizedBoxes - Array of normalized bounding boxes
+ * @param pageWidth - Width of the PDF page in points
+ * @param pageHeight - Height of the PDF page in points
+ * @returns Array of bounding boxes in PDF coordinate space
+ */
+export function convertNormalizedBoundingBoxes(
+	normalizedBoxes: NormalizedBoundingBox[],
+	pageWidth: number,
+	pageHeight: number
+): BoundingBox[] {
+	return normalizedBoxes.map((box) => {
+		// Convert percentage (0-100) to PDF points
+		const x_min_points = (box.x_min / 100) * pageWidth;
+		const x_max_points = (box.x_max / 100) * pageWidth;
+		const y_min_points = (box.y_min / 100) * pageHeight;
+		const y_max_points = (box.y_max / 100) * pageHeight;
+
+		// Note: y_min/y_max are typically from top in screen coordinates
+		// We need to convert to PDF coordinates (origin at bottom-left)
+		// So y_min from top = pageHeight - y_min_points
+		const width = x_max_points - x_min_points;
+		const height = y_max_points - y_min_points;
+
+		return {
+			page: box.page,
+			x: x_min_points,
+			// Convert from top-origin to bottom-origin
+			y: pageHeight - y_max_points,
+			width,
+			height,
+			borderColor: box.borderColor,
+			fillColor: box.fillColor,
+			opacity: box.opacity,
+			borderWidth: box.borderWidth,
+			borderRadius: box.borderRadius,
+			className: box.className,
+			id: box.id
+		};
+	});
 }

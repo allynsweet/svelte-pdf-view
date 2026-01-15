@@ -156,13 +156,62 @@ The bounding box system automatically handles this transformation. When you spec
 
 ```typescript
 {
-  page: 1,
-  x: 100,    // 100 points from the left edge
-  y: 200,    // 200 points from the BOTTOM edge (not top!)
-  width: 150,
-  height: 100
+	page: 1,
+	x: 100, // 100 points from the left edge
+	y: 200, // 200 points from the BOTTOM edge (not top!)
+	width: 150,
+	height: 100
 }
 ```
+
+## Using Normalized Coordinates (0-100 format)
+
+If your bounding boxes use percentage-based coordinates (0-100) with `x_min`, `x_max`, `y_min`, `y_max` format, you can use the `convertNormalizedBoundingBoxes` utility:
+
+```typescript
+import {
+	PdfViewer,
+	PdfRenderer,
+	type NormalizedBoundingBox,
+	convertNormalizedBoundingBoxes
+} from 'svelte-pdf-view';
+
+// Your bounding boxes in percentage format (0-100)
+const normalizedBoxes: NormalizedBoundingBox[] = [
+	{
+		page: 1,
+		x_min: 10, // 10% from left edge
+		x_max: 40, // 40% from left edge
+		y_min: 20, // 20% from top edge
+		y_max: 35, // 35% from top edge
+		borderColor: '#00ff00',
+		fillColor: 'rgba(0, 255, 0, 0.2)',
+		borderRadius: 8
+	},
+	{
+		page: 1,
+		x_min: 50,
+		x_max: 80,
+		y_min: 60,
+		y_max: 75,
+		borderColor: '#ff00ff'
+	}
+];
+
+// Convert to PDF coordinate space
+// Provide your PDF's page dimensions in points
+// Common sizes: US Letter (612x792), A4 (595x842), Legal (612x1008)
+const convertedBoxes = convertNormalizedBoundingBoxes(
+	normalizedBoxes,
+	612, // page width in points
+	792 // page height in points
+);
+
+// Use the converted boxes
+let boxes = convertedBoxes;
+```
+
+**Note:** The conversion utility assumes `y_min` and `y_max` are measured from the top of the page (screen coordinates). It automatically converts them to PDF coordinates (measured from bottom).
 
 ## Styling Options
 

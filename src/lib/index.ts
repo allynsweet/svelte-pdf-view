@@ -17,8 +17,9 @@ export {
 	type PdfViewerContext
 } from './pdf-viewer/context.js';
 
-// Export bounding box types
-export type { BoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
+// Export bounding box types and utilities
+export type { BoundingBox, NormalizedBoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
+export { convertNormalizedBoundingBoxes } from './pdf-viewer/BoundingBoxLayer.js';
 
 // Export PDF.js singleton utilities
 export { destroyPdfJs } from './pdf-viewer/pdfjs-singleton.js';
