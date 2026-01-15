@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { base } from '$app/paths';
-	import { PdfViewer, PdfToolbar, PdfRenderer, type PdfSource, type BoundingBox } from '$lib/index.js';
+	import {
+		PdfViewer,
+		PdfToolbar,
+		PdfRenderer,
+		type PdfSource,
+		type BoundingBox
+	} from '$lib/index.js';
 
 	const defaultPdf = `${base}/Demo.pdf`;
 	let pdfSource: PdfSource = $state(defaultPdf);
@@ -8,7 +14,7 @@
 	let loadError = $state<string | null>(null);
 
 	// Bounding boxes demo
-	let showBoundingBoxes = $state(false);
+	let showBoundingBoxes = $state(true);
 	let boundingBoxes = $state<BoundingBox[]>([
 		{
 			page: 1,

@@ -157,6 +157,13 @@
 			srcDataForDownload = data;
 		}
 	});
+
+	// Update renderer when bounding boxes change
+	$effect(() => {
+		if (rendererActions) {
+			rendererActions.updateBoundingBoxes(boundingBoxes);
+		}
+	});
 </script>
 
 <div class="pdf-viewer-container {className}">

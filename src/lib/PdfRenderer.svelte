@@ -42,8 +42,8 @@
 
 	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
 	let src = $derived(srcProp ?? context.src);
-	// Get bounding boxes from context
-	let boundingBoxes = $derived(context.boundingBoxes);
+	// Get bounding boxes from context - use $derived.by to ensure getter is tracked
+	let boundingBoxes = $derived.by(() => context.boundingBoxes);
 
 	let hostEl: HTMLDivElement | undefined = $state();
 	let shadowRoot: ShadowRoot | null = null;
