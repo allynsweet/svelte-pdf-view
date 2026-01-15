@@ -261,6 +261,13 @@
 		}
 	});
 
+	// Update bounding boxes when they change
+	$effect(() => {
+		if (viewer && boundingBoxes) {
+			viewer.updateBoundingBoxes(boundingBoxes);
+		}
+	});
+
 	onDestroy(() => {
 		if (viewer) {
 			viewer.destroy();
