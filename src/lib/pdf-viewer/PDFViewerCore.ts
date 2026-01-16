@@ -293,22 +293,24 @@ export class PDFViewerCore {
 	 * @param page - Page number (1-indexed)
 	 * @param x - X coordinate in PDF points (from left)
 	 * @param y - Y coordinate in PDF points (from bottom, PDF coordinate system)
+	 * @param scrollBehavior - Scroll behavior: "auto", "smooth", or "instant" (default: "smooth")
 	 */
-	scrollToCoordinates(page: number, x: number, y: number): void {
+	scrollToCoordinates(
+		page: number,
+		x: number,
+		y: number,
+		scrollBehavior: ScrollBehavior = 'smooth'
+	): void {
 		if (page < 1 || page > this.pages.length) return;
 
 		const pageView = this.pages[page - 1];
 		const containerRect = this.container.getBoundingClientRect();
 
-		// Calculate the page's offset from the top of the scroll container
-		let pageOffsetTop = 0;
-		for (let i = 0; i < page - 1; i++) {
-			pageOffsetTop += this.pages[i].height + 10; // 10px margin
-		}
+		// Get the actual page's offset from the DOM (more accurate than calculating)
+		const pageOffsetTop = pageView.div.offsetTop;
 
 		// Get the page dimensions (scaled)
 		const pageHeight = pageView.height;
-		const pageWidth = pageView.width;
 
 		// Convert PDF coordinates (bottom-origin) to screen coordinates (top-origin)
 		// In PDF: y is measured from bottom, increasing upward
@@ -320,11 +322,11 @@ export class PDFViewerCore {
 		const targetScrollTop = pageOffsetTop + pointYInScreen - containerRect.height / 2;
 		const targetScrollLeft = pointXInScreen - containerRect.width / 2;
 
-		// Smooth scroll to the target position
+		// Scroll to the target position with specified behavior
 		this.container.scrollTo({
 			top: targetScrollTop,
 			left: targetScrollLeft,
-			behavior: 'smooth'
+			behavior: scrollBehavior
 		});
 
 		this.eventBus.dispatch('pagechanged', { pageNumber: page });

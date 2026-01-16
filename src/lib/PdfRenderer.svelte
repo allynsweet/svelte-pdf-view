@@ -227,8 +227,8 @@
 		updateBoundingBoxes: (boxes) => {
 			viewer?.updateBoundingBoxes(boxes);
 		},
-		scrollToCoordinates: (page, x, y) => {
-			viewer?.scrollToCoordinates(page, x, y);
+		scrollToCoordinates: (page, x, y, scrollBehavior) => {
+			viewer?.scrollToCoordinates(page, x, y, scrollBehavior);
 		}
 	};
 

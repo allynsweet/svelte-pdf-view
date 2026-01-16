@@ -138,8 +138,8 @@
 		updateBoundingBoxes: (boxes: BoundingBox[]) => {
 			rendererActions?.updateBoundingBoxes(boxes);
 		},
-		scrollToCoordinates: (page: number, x: number, y: number) => {
-			rendererActions?.scrollToCoordinates(page, x, y);
+		scrollToCoordinates: (page: number, x: number, y: number, scrollBehavior?: ScrollBehavior) => {
+			rendererActions?.scrollToCoordinates(page, x, y, scrollBehavior);
 		}
 	};
 

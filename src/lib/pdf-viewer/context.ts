@@ -66,7 +66,12 @@ export interface PdfViewerActions {
 	/** Update bounding boxes */
 	updateBoundingBoxes: (boxes: BoundingBox[]) => void;
 	/** Scroll to specific coordinates (in PDF points) and center them in the viewport */
-	scrollToCoordinates: (page: number, x: number, y: number) => void;
+	scrollToCoordinates: (
+		page: number,
+		x: number,
+		y: number,
+		scrollBehavior?: ScrollBehavior
+	) => void;
 }
 
 export interface PdfViewerContext {
