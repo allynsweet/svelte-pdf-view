@@ -54,6 +54,7 @@
 		currentPage: 1,
 		scale: initialScale,
 		rotation: 0,
+		pageDimensions: new Map(),
 		searchQuery: '',
 		searchCurrent: 0,
 		searchTotal: 0,
@@ -137,8 +138,8 @@
 		updateBoundingBoxes: (boxes: BoundingBox[]) => {
 			rendererActions?.updateBoundingBoxes(boxes);
 		},
-		scrollToBoundingBox: (box: BoundingBox) => {
-			rendererActions?.scrollToBoundingBox(box);
+		scrollToCoordinates: (page: number, x: number, y: number) => {
+			rendererActions?.scrollToCoordinates(page, x, y);
 		}
 	};
 

@@ -10,7 +10,10 @@
 	const { actions } = getPdfViewerContext();
 
 	function scrollToBox(box: BoundingBox) {
-		actions.scrollToBoundingBox(box);
+		// Calculate the center of the bounding box
+		const centerX = box.x + box.width / 2;
+		const centerY = box.y + box.height / 2;
+		actions.scrollToCoordinates(box.page, centerX, centerY);
 	}
 </script>
 

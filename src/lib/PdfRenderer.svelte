@@ -120,6 +120,16 @@
 				viewerState.totalPages = data.pagesCount as number;
 			});
 
+			eventBus.on('pagedimensions', (data: Record<string, unknown>) => {
+				const pageNumber = data.pageNumber as number;
+				const width = data.width as number;
+				const height = data.height as number;
+				// Update the Map with new page dimensions
+				viewerState.pageDimensions.set(pageNumber, { width, height });
+				// Trigger reactivity by reassigning
+				viewerState.pageDimensions = new Map(viewerState.pageDimensions);
+			});
+
 			eventBus.on('updatefindmatchescount', (data: Record<string, unknown>) => {
 				const matchesCount = data.matchesCount as { current: number; total: number };
 				viewerState.searchCurrent = matchesCount.current;
@@ -217,8 +227,8 @@
 		updateBoundingBoxes: (boxes) => {
 			viewer?.updateBoundingBoxes(boxes);
 		},
-		scrollToBoundingBox: (box) => {
-			viewer?.scrollToBoundingBox(box);
+		scrollToCoordinates: (page, x, y) => {
+			viewer?.scrollToCoordinates(page, x, y);
 		}
 	};
 

@@ -14,7 +14,8 @@ export {
 	PresentationModeState,
 	type PdfViewerState,
 	type PdfViewerActions,
-	type PdfViewerContext
+	type PdfViewerContext,
+	type PageDimensions
 } from './pdf-viewer/context.js';
 
 // Export bounding box types and utilities

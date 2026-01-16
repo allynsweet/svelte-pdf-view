@@ -6,8 +6,7 @@
 		PdfRenderer,
 		type PdfSource,
 		type BoundingBox,
-		type NormalizedBoundingBox,
-		convertNormalizedBoundingBoxes
+		getPdfViewerContext
 	} from '$lib/index.js';
 	import ScrollDemo from './ScrollDemo.svelte';
 
@@ -46,7 +45,10 @@
 	]);
 
 	/* Example: Using Normalized Bounding Boxes (0-100 coordinates)
-	 * If you have bounding boxes in percentage format (0-100), you can convert them:
+	 * If you have bounding boxes in percentage format (0-100), you can convert them
+	 * using page dimensions from the viewer state:
+	 *
+	 * const { state } = getPdfViewerContext();
 	 *
 	 * const normalizedBoxes: NormalizedBoundingBox[] = [
 	 *   {
@@ -61,13 +63,21 @@
 	 *   }
 	 * ];
 	 *
-	 * // Convert to PDF coordinates (assuming standard US Letter: 612x792 points)
-	 * const convertedBoxes = convertNormalizedBoundingBoxes(normalizedBoxes, 612, 792);
-	 * boundingBoxes = convertedBoxes;
+	 * // Get dimensions for page 1 (works for any page, including landscape pages)
+	 * const page1Dims = state.pageDimensions.get(1);
+	 * if (page1Dims) {
+	 *   const convertedBoxes = convertNormalizedBoundingBoxes(
+	 *     normalizedBoxes,
+	 *     page1Dims.width,   // Automatically detected from PDF
+	 *     page1Dims.height   // Automatically detected from PDF
+	 *   );
+	 *   boundingBoxes = convertedBoxes;
+	 * }
 	 *
-	 * Note: Page dimensions vary by PDF. Common sizes:
-	 * - US Letter: 612 x 792 points
-	 * - A4: 595 x 842 points
+	 * Note: Each page can have different dimensions (portrait vs landscape)
+	 * Common page sizes for reference:
+	 * - US Letter: 612 x 792 points (portrait) or 792 x 612 (landscape)
+	 * - A4: 595 x 842 points (portrait) or 842 x 595 (landscape)
 	 * - Legal: 612 x 1008 points
 	 */
 

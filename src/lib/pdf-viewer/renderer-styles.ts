@@ -74,7 +74,7 @@ export const rendererStyles = `
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 20px;
+	padding: 5px;
 	gap: 16px;
 	min-width: fit-content;
 }

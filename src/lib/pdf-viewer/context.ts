@@ -17,6 +17,12 @@ export enum PresentationModeState {
 	FULLSCREEN = 3
 }
 
+/** Page dimensions for a specific page */
+export interface PageDimensions {
+	width: number;
+	height: number;
+}
+
 export interface PdfViewerState {
 	// Document state
 	loading: boolean;
@@ -27,6 +33,9 @@ export interface PdfViewerState {
 	// View state
 	scale: number;
 	rotation: number;
+
+	// Page dimensions (unscaled, in PDF points) - map of page number to dimensions
+	pageDimensions: Map<number, PageDimensions>;
 
 	// Search state
 	searchQuery: string;
@@ -56,8 +65,8 @@ export interface PdfViewerActions {
 	exitPresentationMode: () => Promise<void>;
 	/** Update bounding boxes */
 	updateBoundingBoxes: (boxes: BoundingBox[]) => void;
-	/** Scroll to a bounding box and center it in the viewport */
-	scrollToBoundingBox: (box: BoundingBox) => void;
+	/** Scroll to specific coordinates (in PDF points) and center them in the viewport */
+	scrollToCoordinates: (page: number, x: number, y: number) => void;
 }
 
 export interface PdfViewerContext {

@@ -131,6 +131,14 @@ export class PDFViewerCore {
 
 			pageView.setPdfPage(page);
 			this.pages.push(pageView);
+
+			// Emit page dimensions for each page (unscaled)
+			const unscaledViewport = page.getViewport({ scale: 1.0, rotation: 0 });
+			this.eventBus.dispatch('pagedimensions', {
+				pageNumber: i,
+				width: unscaledViewport.width,
+				height: unscaledViewport.height
+			});
 		}
 
 		this.eventBus.dispatch('pagesloaded', { pagesCount: numPages });
@@ -281,36 +289,45 @@ export class PDFViewerCore {
 	}
 
 	/**
-	 * Scroll to a bounding box and center it in the viewport
-	 * @param box - The bounding box to scroll to
+	 * Scroll to specific coordinates and center them in the viewport
+	 * @param page - Page number (1-indexed)
+	 * @param x - X coordinate in PDF points (from left)
+	 * @param y - Y coordinate in PDF points (from bottom, PDF coordinate system)
 	 */
-	scrollToBoundingBox(box: BoundingBox): void {
-		if (box.page < 1 || box.page > this.pages.length) return;
+	scrollToCoordinates(page: number, x: number, y: number): void {
+		if (page < 1 || page > this.pages.length) return;
 
-		const pageView = this.pages[box.page - 1];
+		const pageView = this.pages[page - 1];
 		const containerRect = this.container.getBoundingClientRect();
 
 		// Calculate the page's offset from the top of the scroll container
 		let pageOffsetTop = 0;
-		for (let i = 0; i < box.page - 1; i++) {
+		for (let i = 0; i < page - 1; i++) {
 			pageOffsetTop += this.pages[i].height + 10; // 10px margin
 		}
 
-		// Calculate the center of the bounding box in the page
-		// Note: box.y is in PDF coordinates (bottom-origin), but we need screen coordinates (top-origin)
-		const boxCenterY = box.y + box.height / 2;
+		// Get the page dimensions (scaled)
+		const pageHeight = pageView.height;
+		const pageWidth = pageView.width;
 
-		// Calculate the scroll position to center the bounding box
-		// We want: boxCenterY to be at the center of the viewport
-		const targetScrollTop = pageOffsetTop + boxCenterY - containerRect.height / 2;
+		// Convert PDF coordinates (bottom-origin) to screen coordinates (top-origin)
+		// In PDF: y is measured from bottom, increasing upward
+		// In Screen: y is measured from top, increasing downward
+		const pointYInScreen = pageHeight - y * this.currentScale;
+		const pointXInScreen = x * this.currentScale;
+
+		// Calculate the scroll position to center the point
+		const targetScrollTop = pageOffsetTop + pointYInScreen - containerRect.height / 2;
+		const targetScrollLeft = pointXInScreen - containerRect.width / 2;
 
 		// Smooth scroll to the target position
 		this.container.scrollTo({
 			top: targetScrollTop,
+			left: targetScrollLeft,
 			behavior: 'smooth'
 		});
 
-		this.eventBus.dispatch('pagechanged', { pageNumber: box.page });
+		this.eventBus.dispatch('pagechanged', { pageNumber: page });
 	}
 
 	get pagesCount(): number {
