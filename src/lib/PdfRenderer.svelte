@@ -9,6 +9,8 @@
 	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
 	import { PdfPresentationMode } from './pdf-viewer/PdfPresentationMode.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
+	import BoundingBoxOverlay from './pdf-viewer/BoundingBoxOverlay.svelte';
+	import type { BoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
 
 	interface Props {
 		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob. If not provided, uses src from PdfViewer context. */
@@ -287,6 +289,12 @@
 		}
 	});
 
+	// Handle bounding box close
+	function handleBoundingBoxClose(box: BoundingBox) {
+		// Call the close callback from context if provided
+		context._onBoundingBoxClose?.(box);
+	}
+
 	onDestroy(() => {
 		if (viewer) {
 			viewer.destroy();
@@ -299,13 +307,31 @@
 	});
 </script>
 
-<div bind:this={hostEl} class="pdf-renderer-host"></div>
+<div class="pdf-renderer-wrapper">
+	<div bind:this={hostEl} class="pdf-renderer-host"></div>
+	{#if !viewerState.loading && mounted}
+		<BoundingBoxOverlay
+			boxes={boundingBoxes}
+			scale={viewerState.scale}
+			pageDimensions={viewerState.pageDimensions}
+			{shadowRoot}
+			onClose={handleBoundingBoxClose}
+		/>
+	{/if}
+</div>
 
 <style>
-	.pdf-renderer-host {
-		display: block;
+	.pdf-renderer-wrapper {
+		position: relative;
 		flex: 1;
 		min-height: 0;
+		overflow: hidden;
+	}
+
+	.pdf-renderer-host {
+		display: block;
+		width: 100%;
+		height: 100%;
 		overflow: hidden;
 	}
 </style>

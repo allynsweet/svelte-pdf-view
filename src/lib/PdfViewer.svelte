@@ -35,6 +35,8 @@
 		drawingStyle?: DrawingStyle;
 		/** Callback when a bounding box is drawn */
 		onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+		/** Callback when a bounding box close button is clicked */
+		onBoundingBoxClose?: (box: BoundingBox) => void;
 		/** Children (toolbar and renderer) */
 		children?: Snippet;
 	}
@@ -49,6 +51,7 @@
 		drawMode = false,
 		drawingStyle = {},
 		onBoundingBoxDrawn,
+		onBoundingBoxClose,
 		children
 	}: Props = $props();
 
@@ -177,7 +180,8 @@
 		_setSrcDataForDownload: (data: ArrayBuffer | null) => {
 			srcDataForDownload = data;
 		},
-		_onBoundingBoxDrawn: onBoundingBoxDrawn
+		_onBoundingBoxDrawn: onBoundingBoxDrawn,
+		_onBoundingBoxClose: onBoundingBoxClose
 	});
 
 	// Update renderer when bounding boxes change

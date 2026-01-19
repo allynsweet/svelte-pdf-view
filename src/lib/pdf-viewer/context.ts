@@ -105,6 +105,8 @@ export interface PdfViewerContext {
 	_setSrcDataForDownload: (data: ArrayBuffer | null) => void;
 	// For internal use - callback when bounding box is drawn
 	_onBoundingBoxDrawn?: (box: import('./BoundingBoxLayer.js').DrawnBoundingBox) => void;
+	// For internal use - callback when bounding box close button is clicked
+	_onBoundingBoxClose?: (box: BoundingBox) => void;
 }
 
 export function setPdfViewerContext(ctx: PdfViewerContext): void {

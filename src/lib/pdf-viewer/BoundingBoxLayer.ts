@@ -72,6 +72,10 @@ export interface BoundingBox {
 	className?: string;
 	/** Optional ID for programmatic access */
 	id?: string;
+	/** Show close button in top right corner */
+	showClose?: boolean;
+	/** Optional snippet for custom close button (receives close callback and box data) */
+	closeButton?: import('svelte').Snippet<[{ close: () => void; box: BoundingBox }]>;
 }
 
 /** Options for BoundingBoxLayer construction */

@@ -30,7 +30,8 @@
 			fillColor: 'rgba(255, 0, 0, 0.1)',
 			borderWidth: 2,
 			borderRadius: 8,
-			id: 'demo-box-1'
+			id: 'demo-box-1',
+			showClose: true // Show default close button
 		},
 		{
 			page: 1,
@@ -42,9 +43,16 @@
 			fillColor: 'rgba(0, 0, 255, 0.2)',
 			borderWidth: 2,
 			borderRadius: 12,
-			id: 'demo-box-2'
+			id: 'demo-box-2',
+			showClose: true
 		}
 	]);
+
+	// Handle bounding box close
+	function handleBoundingBoxClose(box: BoundingBox) {
+		console.log('Closing bounding box:', box.id);
+		boundingBoxes = boundingBoxes.filter((b) => b.id !== box.id);
+	}
 
 	// Drawing mode state
 	let drawMode = $state(false);
@@ -294,6 +302,7 @@
 				opacity: 1.0
 			}}
 			onBoundingBoxDrawn={handleBoundingBoxDrawn}
+			onBoundingBoxClose={handleBoundingBoxClose}
 		>
 			<PdfToolbar />
 			<ScrollDemo boundingBoxes={showBoundingBoxes ? boundingBoxes : []} />
