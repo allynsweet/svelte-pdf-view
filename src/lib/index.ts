@@ -15,11 +15,16 @@ export {
 	type PdfViewerState,
 	type PdfViewerActions,
 	type PdfViewerContext,
-	type PageDimensions
+	type PageDimensions,
+	type DrawingStyle
 } from './pdf-viewer/context.js';
 
 // Export bounding box types and utilities
-export type { BoundingBox, NormalizedBoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
+export type {
+	BoundingBox,
+	NormalizedBoundingBox,
+	DrawnBoundingBox
+} from './pdf-viewer/BoundingBoxLayer.js';
 export { convertNormalizedBoundingBoxes } from './pdf-viewer/BoundingBoxLayer.js';
 
 // Export PDF.js singleton utilities

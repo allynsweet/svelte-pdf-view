@@ -97,7 +97,10 @@
 				eventBus,
 				initialScale: viewerState.scale,
 				initialRotation: viewerState.rotation,
-				boundingBoxes: boundingBoxes
+				boundingBoxes: boundingBoxes,
+				drawMode: context.state.drawMode,
+				drawingStyle: context.drawingStyle,
+				onBoundingBoxDrawn: context._onBoundingBoxDrawn
 			});
 
 			findController = new FindController(newViewer, eventBus);
@@ -226,6 +229,9 @@
 		},
 		updateBoundingBoxes: (boxes) => {
 			viewer?.updateBoundingBoxes(boxes);
+		},
+		updateDrawMode: (enabled) => {
+			viewer?.updateDrawMode(enabled);
 		},
 		scrollToCoordinates: (page, x, y, scrollBehavior) => {
 			viewer?.scrollToCoordinates(page, x, y, scrollBehavior);

@@ -21,7 +21,9 @@ import type { PDFPageProxy, PageViewport, TextLayer } from 'pdfjs-dist/legacy/bu
 import type { EventBus } from './EventBus.js';
 import { AnnotationLayerBuilder } from './AnnotationLayerBuilder.js';
 import type { SimpleLinkService } from './SimpleLinkService.js';
-import { BoundingBoxLayer, type BoundingBox } from './BoundingBoxLayer.js';
+import { BoundingBoxLayer, type BoundingBox, type DrawnBoundingBox } from './BoundingBoxLayer.js';
+import { DrawingLayer } from './DrawingLayer.js';
+import type { DrawingStyle } from './context.js';
 
 // Dynamically loaded pdfjs utilities
 let setLayerDimensions: typeof import('pdfjs-dist/legacy/build/pdf.mjs').setLayerDimensions;
@@ -42,6 +44,9 @@ export interface PDFPageViewOptions {
 	rotation?: number;
 	linkService?: SimpleLinkService;
 	boundingBoxes?: BoundingBox[];
+	drawMode?: boolean;
+	drawingStyle?: DrawingStyle;
+	onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 }
 
 export const RenderingStates = {
@@ -80,6 +85,12 @@ export class PDFPageView {
 	private boundingBoxes: BoundingBox[] = [];
 	private boundingBoxLayerRendered = false;
 
+	// Drawing layer
+	private drawingLayer: DrawingLayer | null = null;
+	private drawMode: boolean;
+	private drawingStyle: DrawingStyle;
+	private onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+
 	public renderingState: RenderingState = RenderingStates.INITIAL;
 	private renderTask: ReturnType<PDFPageProxy['render']> | null = null;
 
@@ -100,6 +111,9 @@ export class PDFPageView {
 		this.viewport = options.defaultViewport;
 		this.linkService = options.linkService ?? null;
 		this.boundingBoxes = options.boundingBoxes ?? [];
+		this.drawMode = options.drawMode ?? false;
+		this.drawingStyle = options.drawingStyle ?? {};
+		this.onBoundingBoxDrawn = options.onBoundingBoxDrawn;
 
 		// Create page container
 		this.div = document.createElement('div');
@@ -311,6 +325,11 @@ export class PDFPageView {
 				this.renderBoundingBoxLayer();
 			}
 
+			// Initialize drawing layer if draw mode is enabled
+			if (this.drawMode) {
+				this.initDrawingLayer();
+			}
+
 			this.renderingState = RenderingStates.FINISHED;
 			this.eventBus.dispatch('pagerendered', {
 				pageNumber: this.id,
@@ -475,8 +494,52 @@ export class PDFPageView {
 		}
 	}
 
+	/**
+	 * Initialize or update the drawing layer
+	 */
+	private initDrawingLayer(): void {
+		if (!this.drawingLayer && this.onBoundingBoxDrawn) {
+			this.drawingLayer = new DrawingLayer({
+				container: this.div,
+				viewport: this.viewport,
+				pageNumber: this.id,
+				drawingStyle: this.drawingStyle,
+				onBoxDrawn: this.onBoundingBoxDrawn,
+				isDrawModeEnabled: () => this.drawMode
+			});
+
+			this.drawingLayer.init();
+			this.drawingLayer.setDrawMode(this.drawMode);
+		}
+	}
+
+	/**
+	 * Set draw mode on/off for this page
+	 * @param enabled - Whether draw mode should be enabled
+	 */
+	setDrawMode(enabled: boolean): void {
+		this.drawMode = enabled;
+
+		// Initialize drawing layer if needed
+		if (enabled && !this.drawingLayer && this.renderingState === RenderingStates.FINISHED) {
+			this.initDrawingLayer();
+		}
+
+		// Update existing drawing layer
+		if (this.drawingLayer) {
+			this.drawingLayer.setDrawMode(enabled);
+		}
+	}
+
 	destroy(): void {
 		this.cancelRendering();
+
+		// Clean up drawing layer
+		if (this.drawingLayer) {
+			this.drawingLayer.destroy();
+			this.drawingLayer = null;
+		}
+
 		this.reset();
 		this.pdfPage?.cleanup();
 		this.div.remove();

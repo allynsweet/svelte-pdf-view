@@ -23,6 +23,15 @@ export interface PageDimensions {
 	height: number;
 }
 
+/** Drawing style configuration for bounding box drawing mode */
+export interface DrawingStyle {
+	borderColor?: string;
+	borderWidth?: number;
+	borderStyle?: 'solid' | 'dashed' | 'dotted';
+	fillColor?: string;
+	opacity?: number;
+}
+
 export interface PdfViewerState {
 	// Document state
 	loading: boolean;
@@ -45,6 +54,9 @@ export interface PdfViewerState {
 
 	// Presentation mode state
 	presentationMode: PresentationModeState;
+
+	// Drawing mode state
+	drawMode: boolean;
 }
 
 export interface PdfViewerActions {
@@ -65,6 +77,8 @@ export interface PdfViewerActions {
 	exitPresentationMode: () => Promise<void>;
 	/** Update bounding boxes */
 	updateBoundingBoxes: (boxes: BoundingBox[]) => void;
+	/** Update drawing mode */
+	updateDrawMode: (enabled: boolean) => void;
 	/** Scroll to specific coordinates (in PDF points) and center them in the viewport */
 	scrollToCoordinates: (
 		page: number,
@@ -81,12 +95,16 @@ export interface PdfViewerContext {
 	src: PdfSource;
 	/** Bounding boxes to render on PDF pages */
 	boundingBoxes: BoundingBox[];
+	/** Drawing style for drawn bounding boxes */
+	drawingStyle: DrawingStyle;
 	// For internal use - allows renderer to register itself
 	_registerRenderer: (renderer: PdfViewerActions) => void;
 	// For internal use - error callback from PdfViewer
 	_onerror?: (error: string) => void;
 	// For internal use - store binary data copy for download (ArrayBuffer gets detached by PDF.js)
 	_setSrcDataForDownload: (data: ArrayBuffer | null) => void;
+	// For internal use - callback when bounding box is drawn
+	_onBoundingBoxDrawn?: (box: import('./BoundingBoxLayer.js').DrawnBoundingBox) => void;
 }
 
 export function setPdfViewerContext(ctx: PdfViewerContext): void {

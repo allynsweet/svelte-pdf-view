@@ -21,7 +21,8 @@ import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventBus } from './EventBus.js';
 import { PDFPageView, RenderingStates } from './PDFPageView.js';
 import { SimpleLinkService } from './SimpleLinkService.js';
-import type { BoundingBox } from './BoundingBoxLayer.js';
+import type { BoundingBox, DrawnBoundingBox } from './BoundingBoxLayer.js';
+import type { DrawingStyle } from './context.js';
 
 export interface PDFViewerOptions {
 	container: HTMLElement;
@@ -29,6 +30,9 @@ export interface PDFViewerOptions {
 	initialScale?: number;
 	initialRotation?: number;
 	boundingBoxes?: BoundingBox[];
+	drawMode?: boolean;
+	drawingStyle?: DrawingStyle;
+	onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 }
 
 const DEFAULT_SCALE = 1.0;
@@ -58,12 +62,20 @@ export class PDFViewerCore {
 	// Bounding boxes
 	private boundingBoxes: BoundingBox[] = [];
 
+	// Drawing mode
+	private drawMode: boolean;
+	private drawingStyle: DrawingStyle;
+	private onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+
 	constructor(options: PDFViewerOptions) {
 		this.container = options.container;
 		this.eventBus = options.eventBus ?? new EventBus();
 		this.currentScale = options.initialScale ?? DEFAULT_SCALE;
 		this.currentRotation = options.initialRotation ?? 0;
 		this.boundingBoxes = options.boundingBoxes ?? [];
+		this.drawMode = options.drawMode ?? false;
+		this.drawingStyle = options.drawingStyle ?? {};
+		this.onBoundingBoxDrawn = options.onBoundingBoxDrawn;
 
 		// Create viewer div inside container
 		this.viewer = document.createElement('div');
@@ -126,7 +138,10 @@ export class PDFViewerCore {
 				scale: this.currentScale,
 				rotation: this.currentRotation,
 				linkService: this.linkService,
-				boundingBoxes: this.boundingBoxes
+				boundingBoxes: this.boundingBoxes,
+				drawMode: this.drawMode,
+				drawingStyle: this.drawingStyle,
+				onBoundingBoxDrawn: this.onBoundingBoxDrawn
 			});
 
 			pageView.setPdfPage(page);
@@ -354,6 +369,18 @@ export class PDFViewerCore {
 		// Update all existing pages
 		for (const page of this.pages) {
 			page.updateBoundingBoxes(boxes);
+		}
+	}
+
+	/**
+	 * Update draw mode for all pages
+	 * @param enabled - Whether draw mode is enabled
+	 */
+	updateDrawMode(enabled: boolean): void {
+		this.drawMode = enabled;
+		// Update all existing pages
+		for (const page of this.pages) {
+			page.setDrawMode(enabled);
 		}
 	}
 

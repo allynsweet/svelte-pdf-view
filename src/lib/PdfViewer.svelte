@@ -11,9 +11,10 @@
 		PresentationModeState,
 		type PdfViewerState,
 		type PdfViewerActions,
-		type PdfSource
+		type PdfSource,
+		type DrawingStyle
 	} from './pdf-viewer/context.js';
-	import type { BoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
+	import type { BoundingBox, DrawnBoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
 
 	interface Props {
 		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob */
@@ -28,6 +29,12 @@
 		class?: string;
 		/** Bounding boxes to render on PDF pages */
 		boundingBoxes?: BoundingBox[];
+		/** Enable drawing mode for creating bounding boxes */
+		drawMode?: boolean;
+		/** Style for drawn bounding boxes */
+		drawingStyle?: DrawingStyle;
+		/** Callback when a bounding box is drawn */
+		onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 		/** Children (toolbar and renderer) */
 		children?: Snippet;
 	}
@@ -39,6 +46,9 @@
 		onerror,
 		class: className = '',
 		boundingBoxes = [],
+		drawMode = false,
+		drawingStyle = {},
+		onBoundingBoxDrawn,
 		children
 	}: Props = $props();
 
@@ -59,7 +69,8 @@
 		searchCurrent: 0,
 		searchTotal: 0,
 		isSearching: false,
-		presentationMode: PresentationModeState.NORMAL
+		presentationMode: PresentationModeState.NORMAL,
+		drawMode
 	});
 
 	// Renderer actions - will be populated when renderer mounts
@@ -138,6 +149,9 @@
 		updateBoundingBoxes: (boxes: BoundingBox[]) => {
 			rendererActions?.updateBoundingBoxes(boxes);
 		},
+		updateDrawMode: (enabled: boolean) => {
+			rendererActions?.updateDrawMode(enabled);
+		},
 		scrollToCoordinates: (page: number, x: number, y: number, scrollBehavior?: ScrollBehavior) => {
 			rendererActions?.scrollToCoordinates(page, x, y, scrollBehavior);
 		}
@@ -153,19 +167,30 @@
 		get boundingBoxes() {
 			return boundingBoxes;
 		},
+		get drawingStyle() {
+			return drawingStyle;
+		},
 		_registerRenderer: (renderer: PdfViewerActions) => {
 			rendererActions = renderer;
 		},
 		_onerror: onerror,
 		_setSrcDataForDownload: (data: ArrayBuffer | null) => {
 			srcDataForDownload = data;
-		}
+		},
+		_onBoundingBoxDrawn: onBoundingBoxDrawn
 	});
 
 	// Update renderer when bounding boxes change
 	$effect(() => {
 		if (rendererActions) {
 			rendererActions.updateBoundingBoxes(boundingBoxes);
+		}
+	});
+
+	// Update draw mode when it changes
+	$effect(() => {
+		if (rendererActions) {
+			rendererActions.updateDrawMode(drawMode);
 		}
 	});
 </script>

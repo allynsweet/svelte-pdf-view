@@ -32,6 +32,20 @@ export interface NormalizedBoundingBox {
 	id?: string;
 }
 
+/** Result from drawing a bounding box in draw mode */
+export interface DrawnBoundingBox {
+	/** Page number (1-indexed) */
+	page: number;
+	/** Minimum X coordinate (0-100, percentage of page width) */
+	x_min: number;
+	/** Maximum X coordinate (0-100, percentage of page width) */
+	x_max: number;
+	/** Minimum Y coordinate (0-100, percentage of page height, from top) */
+	y_min: number;
+	/** Maximum Y coordinate (0-100, percentage of page height, from top) */
+	y_max: number;
+}
+
 /** Bounding box definition with coordinates and optional styles */
 export interface BoundingBox {
 	/** Page number (1-indexed) */

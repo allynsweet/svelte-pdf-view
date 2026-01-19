@@ -6,6 +6,8 @@
 		PdfRenderer,
 		type PdfSource,
 		type BoundingBox,
+		type DrawnBoundingBox,
+		convertNormalizedBoundingBoxes,
 		getPdfViewerContext
 	} from '$lib/index.js';
 	import ScrollDemo from './ScrollDemo.svelte';
@@ -43,6 +45,45 @@
 			id: 'demo-box-2'
 		}
 	]);
+
+	// Drawing mode state
+	let drawMode = $state(false);
+	let drawnBoxes = $state<DrawnBoundingBox[]>([]);
+
+	// Handle drawn bounding boxes
+	function handleBoundingBoxDrawn(box: DrawnBoundingBox) {
+		console.log('Bounding box drawn:', box);
+		drawnBoxes = [...drawnBoxes, box];
+
+		// Convert the normalized coordinates to PDF coordinates and add to display
+		// We need to wait for the PDF to be loaded to get dimensions
+		// For now, we'll add it to a pending list and convert when dimensions are available
+		setTimeout(() => {
+			try {
+				const { state } = getPdfViewerContext();
+				const pageDims = state.pageDimensions.get(box.page);
+				if (pageDims) {
+					const converted = convertNormalizedBoundingBoxes([box], pageDims.width, pageDims.height);
+					boundingBoxes = [
+						...boundingBoxes,
+						{
+							...converted[0],
+							borderColor: '#00ff00',
+							fillColor: 'rgba(0, 255, 0, 0.2)',
+							borderWidth: 2,
+							id: `drawn-${Date.now()}`
+						}
+					];
+				}
+			} catch (e) {
+				console.error('Error converting drawn box:', e);
+			}
+		}, 100);
+	}
+
+	function toggleDrawMode() {
+		drawMode = !drawMode;
+	}
 
 	/* Example: Using Normalized Bounding Boxes (0-100 coordinates)
 	 * If you have bounding boxes in percentage format (0-100), you can convert them
@@ -225,7 +266,15 @@
 			<button onclick={addRandomBoundingBox} class="bbox-btn">Add Random Box</button>
 			<button onclick={resetBoundingBoxes} class="bbox-btn">Reset Boxes</button>
 			<button onclick={clearBoundingBoxes} class="bbox-btn">Clear All</button>
+			<button onclick={toggleDrawMode} class="draw-btn" class:active={drawMode}>
+				{drawMode ? '✓ Drawing Mode ON' : 'Enable Drawing Mode'}
+			</button>
 		</div>
+		{#if drawMode}
+			<div class="draw-info">
+				Click and drag on the PDF to draw bounding boxes (blue dashed border). Drawn boxes: {drawnBoxes.length}
+			</div>
+		{/if}
 		{#if loadError}
 			<div class="local-error">Local Error: {loadError}</div>
 		{/if}
@@ -236,6 +285,15 @@
 			src={pdfSource}
 			onerror={handlePdfError}
 			boundingBoxes={showBoundingBoxes ? boundingBoxes : []}
+			{drawMode}
+			drawingStyle={{
+				borderColor: '#0000ff',
+				borderWidth: 2,
+				borderStyle: 'dashed',
+				fillColor: 'rgba(0, 0, 255, 0.1)',
+				opacity: 1.0
+			}}
+			onBoundingBoxDrawn={handleBoundingBoxDrawn}
 		>
 			<PdfToolbar />
 			<ScrollDemo boundingBoxes={showBoundingBoxes ? boundingBoxes : []} />
@@ -316,6 +374,34 @@
 
 	.bbox-btn:hover {
 		background: #ddd6fe;
+	}
+
+	.draw-btn {
+		padding: 0.5rem 1rem;
+		border: 1px solid #0ea5e9;
+		border-radius: 4px;
+		background: #e0f2fe;
+		cursor: pointer;
+		color: #0369a1;
+	}
+
+	.draw-btn:hover {
+		background: #bae6fd;
+	}
+
+	.draw-btn.active {
+		background: #0ea5e9;
+		color: white;
+		font-weight: 600;
+	}
+
+	.draw-info {
+		margin-top: 0.5rem;
+		padding: 0.5rem;
+		background: #e0f2fe;
+		border: 1px solid #0ea5e9;
+		border-radius: 4px;
+		color: #0369a1;
 	}
 
 	.error-btn {
