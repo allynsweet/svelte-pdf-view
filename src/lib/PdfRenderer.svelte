@@ -172,6 +172,19 @@
 			// Set document on presentation mode
 			presentationMode.setDocument(loadedPdfDocument);
 
+			// Center the scroll position horizontally
+			if (scrollContainerEl) {
+				// Wait for next tick to ensure DOM is updated
+				await new Promise(resolve => setTimeout(resolve, 0));
+
+				const scrollWidth = scrollContainerEl.scrollWidth;
+				const clientWidth = scrollContainerEl.clientWidth;
+
+				if (scrollWidth > clientWidth) {
+					scrollContainerEl.scrollLeft = (scrollWidth - clientWidth) / 2;
+				}
+			}
+
 			viewer = newViewer;
 			viewerState.loading = false;
 		} catch (e) {
