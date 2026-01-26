@@ -6,7 +6,7 @@ export {
 } from './PdfViewer.svelte';
 
 // Export types from context (PdfSource is the canonical source)
-export type { PdfSource } from './pdf-viewer/context.js';
+export type { PdfSource, TextHighlightData } from './pdf-viewer/context.js';
 
 // Export context for custom toolbars
 export {

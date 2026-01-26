@@ -40,7 +40,12 @@
 	}: Props = $props();
 
 	const context = getPdfViewerContext();
-	const { state: viewerState, _registerRenderer, _setSrcDataForDownload } = context;
+	const {
+		state: viewerState,
+		_registerRenderer,
+		_setSrcDataForDownload,
+		_onTextHighlighted
+	} = context;
 
 	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
 	let src = $derived(srcProp ?? context.src);
@@ -51,6 +56,7 @@
 	let shadowRoot: ShadowRoot | null = null;
 	let scrollContainerEl: HTMLDivElement | null = null;
 	let mounted = $state(false);
+	let textSelectionAbortController: AbortController | null = null;
 
 	// Core instances
 	let viewer: import('./pdf-viewer/PDFViewerCore.js').PDFViewerCore | null = null;
@@ -175,7 +181,7 @@
 			// Center the scroll position horizontally
 			if (scrollContainerEl) {
 				// Wait for next tick to ensure DOM is updated
-				await new Promise(resolve => setTimeout(resolve, 0));
+				await new Promise((resolve) => setTimeout(resolve, 0));
 
 				const scrollWidth = scrollContainerEl.scrollWidth;
 				const clientWidth = scrollContainerEl.clientWidth;
@@ -201,6 +207,33 @@
 			// Call the error callback if provided
 			context._onerror?.(errorMessage);
 		}
+	}
+
+	// Handle text selection
+	function handleTextSelection() {
+		if (!_onTextHighlighted) return;
+
+		// Try to get selection from shadow root first, then fall back to window
+		const selection = shadowRoot?.getSelection() || window.getSelection();
+		if (!selection || selection.rangeCount === 0) return;
+
+		const selectedText = selection.toString().trim();
+		if (!selectedText) return;
+
+		// Get the bounding rectangle of the selection
+		const range = selection.getRangeAt(0);
+		const rect = range.getBoundingClientRect();
+
+		// Fire the callback with text and position data
+		_onTextHighlighted({
+			text: selectedText,
+			position: {
+				x: rect.x,
+				y: rect.y,
+				width: rect.width,
+				height: rect.height
+			}
+		});
 	}
 
 	// Register actions with context
@@ -284,6 +317,14 @@
 			// Register actions
 			_registerRenderer(rendererActions);
 
+			// Set up text selection listener if callback is provided
+			if (_onTextHighlighted) {
+				textSelectionAbortController = new AbortController();
+				document.addEventListener('mouseup', handleTextSelection, {
+					signal: textSelectionAbortController.signal
+				});
+			}
+
 			mounted = true;
 		}
 	});
@@ -315,6 +356,9 @@
 		}
 		findController = null;
 		presentationMode.destroy();
+		// Clean up text selection listener
+		textSelectionAbortController?.abort();
+		textSelectionAbortController = null;
 		// Note: Worker is a global singleton, not cleaned up per-component
 		// Use destroyPdfJs() from pdfjs-singleton.js if you need to fully cleanup
 	});

@@ -12,6 +12,7 @@
 		type PdfViewerState,
 		type PdfViewerActions,
 		type PdfSource,
+		type TextHighlightData,
 		type DrawingStyle
 	} from './pdf-viewer/context.js';
 	import type { BoundingBox, DrawnBoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
@@ -25,6 +26,8 @@
 		downloadFilename?: string;
 		/** Callback when PDF fails to load */
 		onerror?: (error: string) => void;
+		/** Callback when text is highlighted in the PDF */
+		onTextHighlighted?: (data: TextHighlightData) => void;
 		/** CSS class for the container */
 		class?: string;
 		/** Bounding boxes to render on PDF pages */
@@ -46,6 +49,7 @@
 		scale: initialScale = 1.0,
 		downloadFilename,
 		onerror,
+		onTextHighlighted,
 		class: className = '',
 		boundingBoxes = [],
 		drawMode = false,
@@ -176,9 +180,14 @@
 		_registerRenderer: (renderer: PdfViewerActions) => {
 			rendererActions = renderer;
 		},
-		_onerror: onerror,
+		get _onerror() {
+			return onerror;
+		},
 		_setSrcDataForDownload: (data: ArrayBuffer | null) => {
 			srcDataForDownload = data;
+		},
+		get _onTextHighlighted() {
+			return onTextHighlighted;
 		},
 		_onBoundingBoxDrawn: onBoundingBoxDrawn,
 		_onBoundingBoxClose: onBoundingBoxClose
