@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { base } from '$app/paths';
-	import { PdfViewer, PdfToolbar, PdfRenderer, type PdfSource } from '$lib/index.js';
+	import { PdfViewer, PdfToolbar, PdfRenderer, type PdfSource, type TextHighlightData } from '$lib/index.js';
 
 	const defaultPdf = `${base}/Demo.pdf`;
 	let pdfSource: PdfSource = $state(defaultPdf);
 	let sourceType = $state<'url' | 'arraybuffer' | 'uint8array' | 'blob'>('url');
 	let loadError = $state<string | null>(null);
+	let highlightedText = $state<string | null>(null);
+	let tooltipPosition = $state<{ x: number; y: number } | null>(null);
 
 	function resetToDefault() {
 		pdfSource = defaultPdf;
@@ -60,6 +62,15 @@
 		console.error('PDF Error (from callback):', error);
 		loadError = `Callback received: ${error}`;
 	}
+
+	function handleTextHighlight(data: TextHighlightData) {
+		highlightedText = data.text;
+		// Position the tooltip above the selection
+		tooltipPosition = {
+			x: data.position.x,
+			y: data.position.y - 10 // 10px above the selection
+		};
+	}
 </script>
 
 <div class="demo">
@@ -92,7 +103,7 @@
 	</div>
 
 	<div class="viewer-container">
-		<PdfViewer src={pdfSource} onerror={handlePdfError}>
+		<PdfViewer src={pdfSource} onerror={handlePdfError} onTextHighlighted={handleTextHighlight}>
 			<PdfToolbar />
 			<PdfRenderer
 				backgroundColor="#e8e8e8"
@@ -101,6 +112,15 @@
 			/>
 		</PdfViewer>
 	</div>
+
+	{#if highlightedText && tooltipPosition}
+		<div
+			class="highlight-tooltip"
+			style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;"
+		>
+			{highlightedText}
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -176,5 +196,44 @@
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		overflow: hidden;
+	}
+
+	.highlight-tooltip {
+		position: fixed;
+		background: #1f2937;
+		color: white;
+		padding: 0.5rem 0.75rem;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		max-width: 300px;
+		word-wrap: break-word;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		z-index: 1000;
+		pointer-events: none;
+		transform: translateY(-100%);
+		animation: fadeIn 0.2s ease-in-out;
+	}
+
+	.highlight-tooltip::after {
+		content: '';
+		position: absolute;
+		bottom: -6px;
+		left: 20px;
+		width: 0;
+		height: 0;
+		border-left: 6px solid transparent;
+		border-right: 6px solid transparent;
+		border-top: 6px solid #1f2937;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(-100%) scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(-100%) scale(1);
+		}
 	}
 </style>
