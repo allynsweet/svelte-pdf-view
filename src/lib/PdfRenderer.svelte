@@ -177,7 +177,8 @@
 	function handleTextSelection() {
 		if (!_onTextHighlighted) return;
 
-		const selection = window.getSelection();
+		// Try to get selection from shadow root first, then fall back to window
+		const selection = shadowRoot?.getSelection() || window.getSelection();
 		if (!selection || selection.rangeCount === 0) return;
 
 		const selectedText = selection.toString().trim();
