@@ -9,6 +9,8 @@
 	import { getPdfJs } from './pdf-viewer/pdfjs-singleton.js';
 	import { PdfPresentationMode } from './pdf-viewer/PdfPresentationMode.js';
 	import { rendererStyles } from './pdf-viewer/renderer-styles.js';
+	import BoundingBoxOverlay from './pdf-viewer/BoundingBoxOverlay.svelte';
+	import type { BoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
 
 	interface Props {
 		/** PDF source - URL string, ArrayBuffer, Uint8Array, or Blob. If not provided, uses src from PdfViewer context. */
@@ -42,6 +44,8 @@
 
 	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
 	let src = $derived(srcProp ?? context.src);
+	// Get bounding boxes from context - use $derived.by to ensure getter is tracked
+	let boundingBoxes = $derived.by(() => context.boundingBoxes);
 
 	let hostEl: HTMLDivElement | undefined = $state();
 	let shadowRoot: ShadowRoot | null = null;
@@ -95,7 +99,11 @@
 				container: scrollContainerEl,
 				eventBus,
 				initialScale: viewerState.scale,
-				initialRotation: viewerState.rotation
+				initialRotation: viewerState.rotation,
+				boundingBoxes: boundingBoxes,
+				drawMode: context.state.drawMode,
+				drawingStyle: context.drawingStyle,
+				onBoundingBoxDrawn: context._onBoundingBoxDrawn
 			});
 
 			findController = new FindController(newViewer, eventBus);
@@ -116,6 +124,16 @@
 
 			eventBus.on('pagesloaded', (data: Record<string, unknown>) => {
 				viewerState.totalPages = data.pagesCount as number;
+			});
+
+			eventBus.on('pagedimensions', (data: Record<string, unknown>) => {
+				const pageNumber = data.pageNumber as number;
+				const width = data.width as number;
+				const height = data.height as number;
+				// Update the Map with new page dimensions
+				viewerState.pageDimensions.set(pageNumber, { width, height });
+				// Trigger reactivity by reassigning
+				viewerState.pageDimensions = new Map(viewerState.pageDimensions);
 			});
 
 			eventBus.on('updatefindmatchescount', (data: Record<string, unknown>) => {
@@ -154,6 +172,19 @@
 
 			// Set document on presentation mode
 			presentationMode.setDocument(loadedPdfDocument);
+
+			// Center the scroll position horizontally
+			if (scrollContainerEl) {
+				// Wait for next tick to ensure DOM is updated
+				await new Promise(resolve => setTimeout(resolve, 0));
+
+				const scrollWidth = scrollContainerEl.scrollWidth;
+				const clientWidth = scrollContainerEl.clientWidth;
+
+				if (scrollWidth > clientWidth) {
+					scrollContainerEl.scrollLeft = (scrollWidth - clientWidth) / 2;
+				}
+			}
 
 			viewer = newViewer;
 			viewerState.loading = false;
@@ -238,6 +269,15 @@
 		},
 		exitPresentationMode: async () => {
 			await presentationMode.exit();
+		},
+		updateBoundingBoxes: (boxes) => {
+			viewer?.updateBoundingBoxes(boxes);
+		},
+		updateDrawMode: (enabled) => {
+			viewer?.updateDrawMode(enabled);
+		},
+		scrollToCoordinates: (page, x, y, scrollBehavior) => {
+			viewer?.scrollToCoordinates(page, x, y, scrollBehavior);
 		}
 	};
 
@@ -291,6 +331,19 @@
 		}
 	});
 
+	// Update bounding boxes when they change
+	$effect(() => {
+		if (viewer && boundingBoxes) {
+			viewer.updateBoundingBoxes(boundingBoxes);
+		}
+	});
+
+	// Handle bounding box close
+	function handleBoundingBoxClose(box: BoundingBox) {
+		// Call the close callback from context if provided
+		context._onBoundingBoxClose?.(box);
+	}
+
 	onDestroy(() => {
 		if (viewer) {
 			viewer.destroy();
@@ -306,13 +359,31 @@
 	});
 </script>
 
-<div bind:this={hostEl} class="pdf-renderer-host"></div>
+<div class="pdf-renderer-wrapper">
+	<div bind:this={hostEl} class="pdf-renderer-host"></div>
+	{#if !viewerState.loading && mounted}
+		<BoundingBoxOverlay
+			boxes={boundingBoxes}
+			scale={viewerState.scale}
+			pageDimensions={viewerState.pageDimensions}
+			{shadowRoot}
+			onClose={handleBoundingBoxClose}
+		/>
+	{/if}
+</div>
 
 <style>
-	.pdf-renderer-host {
-		display: block;
+	.pdf-renderer-wrapper {
+		position: relative;
 		flex: 1;
 		min-height: 0;
+		overflow: hidden;
+	}
+
+	.pdf-renderer-host {
+		display: block;
+		width: 100%;
+		height: 100%;
 		overflow: hidden;
 	}
 </style>

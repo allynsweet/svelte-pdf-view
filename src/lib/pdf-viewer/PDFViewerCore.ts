@@ -21,12 +21,18 @@ import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventBus } from './EventBus.js';
 import { PDFPageView, RenderingStates } from './PDFPageView.js';
 import { SimpleLinkService } from './SimpleLinkService.js';
+import type { BoundingBox, DrawnBoundingBox } from './BoundingBoxLayer.js';
+import type { DrawingStyle } from './context.js';
 
 export interface PDFViewerOptions {
 	container: HTMLElement;
 	eventBus?: EventBus;
 	initialScale?: number;
 	initialRotation?: number;
+	boundingBoxes?: BoundingBox[];
+	drawMode?: boolean;
+	drawingStyle?: DrawingStyle;
+	onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 }
 
 const DEFAULT_SCALE = 1.0;
@@ -53,11 +59,23 @@ export class PDFViewerCore {
 	// Link service for annotation navigation
 	private linkService: SimpleLinkService;
 
+	// Bounding boxes
+	private boundingBoxes: BoundingBox[] = [];
+
+	// Drawing mode
+	private drawMode: boolean;
+	private drawingStyle: DrawingStyle;
+	private onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+
 	constructor(options: PDFViewerOptions) {
 		this.container = options.container;
 		this.eventBus = options.eventBus ?? new EventBus();
 		this.currentScale = options.initialScale ?? DEFAULT_SCALE;
 		this.currentRotation = options.initialRotation ?? 0;
+		this.boundingBoxes = options.boundingBoxes ?? [];
+		this.drawMode = options.drawMode ?? false;
+		this.drawingStyle = options.drawingStyle ?? {};
+		this.onBoundingBoxDrawn = options.onBoundingBoxDrawn;
 
 		// Create viewer div inside container
 		this.viewer = document.createElement('div');
@@ -119,11 +137,23 @@ export class PDFViewerCore {
 				eventBus: this.eventBus,
 				scale: this.currentScale,
 				rotation: this.currentRotation,
-				linkService: this.linkService
+				linkService: this.linkService,
+				boundingBoxes: this.boundingBoxes,
+				drawMode: this.drawMode,
+				drawingStyle: this.drawingStyle,
+				onBoundingBoxDrawn: this.onBoundingBoxDrawn
 			});
 
 			pageView.setPdfPage(page);
 			this.pages.push(pageView);
+
+			// Emit page dimensions for each page (unscaled)
+			const unscaledViewport = page.getViewport({ scale: 1.0, rotation: 0 });
+			this.eventBus.dispatch('pagedimensions', {
+				pageNumber: i,
+				width: unscaledViewport.width,
+				height: unscaledViewport.height
+			});
 		}
 
 		this.eventBus.dispatch('pagesloaded', { pagesCount: numPages });
@@ -273,6 +303,50 @@ export class PDFViewerCore {
 		this.eventBus.dispatch('pagechanged', { pageNumber });
 	}
 
+	/**
+	 * Scroll to specific coordinates and center them in the viewport
+	 * @param page - Page number (1-indexed)
+	 * @param x - X coordinate in PDF points (from left)
+	 * @param y - Y coordinate in PDF points (from bottom, PDF coordinate system)
+	 * @param scrollBehavior - Scroll behavior: "auto", "smooth", or "instant" (default: "smooth")
+	 */
+	scrollToCoordinates(
+		page: number,
+		x: number,
+		y: number,
+		scrollBehavior: ScrollBehavior = 'smooth'
+	): void {
+		if (page < 1 || page > this.pages.length) return;
+
+		const pageView = this.pages[page - 1];
+		const containerRect = this.container.getBoundingClientRect();
+
+		// Get the actual page's offset from the DOM (more accurate than calculating)
+		const pageOffsetTop = pageView.div.offsetTop;
+
+		// Get the page dimensions (scaled)
+		const pageHeight = pageView.height;
+
+		// Convert PDF coordinates (bottom-origin) to screen coordinates (top-origin)
+		// In PDF: y is measured from bottom, increasing upward
+		// In Screen: y is measured from top, increasing downward
+		const pointYInScreen = pageHeight - y * this.currentScale;
+		const pointXInScreen = x * this.currentScale;
+
+		// Calculate the scroll position to center the point
+		const targetScrollTop = pageOffsetTop + pointYInScreen - containerRect.height / 2;
+		const targetScrollLeft = pointXInScreen - containerRect.width / 2;
+
+		// Scroll to the target position with specified behavior
+		this.container.scrollTo({
+			top: targetScrollTop,
+			left: targetScrollLeft,
+			behavior: scrollBehavior
+		});
+
+		this.eventBus.dispatch('pagechanged', { pageNumber: page });
+	}
+
 	get pagesCount(): number {
 		return this.pages.length;
 	}
@@ -284,6 +358,30 @@ export class PDFViewerCore {
 
 	getPageView(pageIndex: number): PDFPageView | undefined {
 		return this.pages[pageIndex];
+	}
+
+	/**
+	 * Update bounding boxes for all pages
+	 * @param boxes - New array of bounding boxes
+	 */
+	updateBoundingBoxes(boxes: BoundingBox[]): void {
+		this.boundingBoxes = boxes;
+		// Update all existing pages
+		for (const page of this.pages) {
+			page.updateBoundingBoxes(boxes);
+		}
+	}
+
+	/**
+	 * Update draw mode for all pages
+	 * @param enabled - Whether draw mode is enabled
+	 */
+	updateDrawMode(enabled: boolean): void {
+		this.drawMode = enabled;
+		// Update all existing pages
+		for (const page of this.pages) {
+			page.setDrawMode(enabled);
+		}
 	}
 
 	cleanup(): void {
