@@ -11,7 +11,8 @@
 		PresentationModeState,
 		type PdfViewerState,
 		type PdfViewerActions,
-		type PdfSource
+		type PdfSource,
+		type TextHighlightData
 	} from './pdf-viewer/context.js';
 
 	interface Props {
@@ -23,6 +24,8 @@
 		downloadFilename?: string;
 		/** Callback when PDF fails to load */
 		onerror?: (error: string) => void;
+		/** Callback when text is highlighted in the PDF */
+		onTextHighlighted?: (data: TextHighlightData) => void;
 		/** CSS class for the container */
 		class?: string;
 		/** Children (toolbar and renderer) */
@@ -34,6 +37,7 @@
 		scale: initialScale = 1.0,
 		downloadFilename,
 		onerror,
+		onTextHighlighted,
 		class: className = '',
 		children
 	}: Props = $props();
@@ -142,9 +146,14 @@
 		_registerRenderer: (renderer: PdfViewerActions) => {
 			rendererActions = renderer;
 		},
-		_onerror: onerror,
+		get _onerror() {
+			return onerror;
+		},
 		_setSrcDataForDownload: (data: ArrayBuffer | null) => {
 			srcDataForDownload = data;
+		},
+		get _onTextHighlighted() {
+			return onTextHighlighted;
 		}
 	});
 </script>

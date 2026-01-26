@@ -8,6 +8,23 @@ const PDF_VIEWER_CONTEXT_KEY = Symbol('pdf-viewer');
 /** PDF source - can be a URL string, ArrayBuffer, Uint8Array, or Blob */
 export type PdfSource = string | ArrayBuffer | Uint8Array | Blob;
 
+/** Text highlight data - contains selected text and position information */
+export interface TextHighlightData {
+	/** The highlighted text content */
+	text: string;
+	/** Position data for custom tooltip positioning */
+	position: {
+		/** X coordinate relative to the viewport */
+		x: number;
+		/** Y coordinate relative to the viewport */
+		y: number;
+		/** Width of the selection bounding box */
+		width: number;
+		/** Height of the selection bounding box */
+		height: number;
+	};
+}
+
 /** Presentation mode state */
 export enum PresentationModeState {
 	UNKNOWN = 0,
@@ -66,6 +83,8 @@ export interface PdfViewerContext {
 	_onerror?: (error: string) => void;
 	// For internal use - store binary data copy for download (ArrayBuffer gets detached by PDF.js)
 	_setSrcDataForDownload: (data: ArrayBuffer | null) => void;
+	// For internal use - text highlight callback from PdfViewer
+	_onTextHighlighted?: (data: TextHighlightData) => void;
 }
 
 export function setPdfViewerContext(ctx: PdfViewerContext): void {
