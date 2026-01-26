@@ -5,7 +5,7 @@
 		PdfToolbar,
 		PdfRenderer,
 		type PdfSource,
-    type TextHighlightData,
+		type TextHighlightData,
 		type BoundingBox,
 		type DrawnBoundingBox,
 		convertNormalizedBoundingBoxes,
@@ -194,6 +194,8 @@
 			x: data.position.x,
 			y: data.position.y - 10 // 10px above the selection
 		};
+	}
+
 	function toggleBoundingBoxes() {
 		showBoundingBoxes = !showBoundingBoxes;
 	}
@@ -303,7 +305,7 @@
 			src={pdfSource}
 			onerror={handlePdfError}
 			boundingBoxes={showBoundingBoxes ? boundingBoxes : []}
-      onTextHighlighted={handleTextHighlight}
+			onTextHighlighted={handleTextHighlight}
 			{drawMode}
 			drawingStyle={{
 				borderColor: '#0000ff',
@@ -326,10 +328,7 @@
 	</div>
 
 	{#if highlightedText && tooltipPosition}
-		<div
-			class="highlight-tooltip"
-			style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;"
-		>
+		<div class="highlight-tooltip" style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;">
 			{highlightedText}
 		</div>
 	{/if}
@@ -468,7 +467,9 @@
 		font-size: 0.875rem;
 		max-width: 300px;
 		word-wrap: break-word;
-		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		box-shadow:
+			0 4px 6px -1px rgba(0, 0, 0, 0.1),
+			0 2px 4px -1px rgba(0, 0, 0, 0.06);
 		z-index: 1000;
 		pointer-events: none;
 		transform: translateY(-100%);

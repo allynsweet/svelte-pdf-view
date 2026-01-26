@@ -12,7 +12,7 @@
 		type PdfViewerState,
 		type PdfViewerActions,
 		type PdfSource,
-		type TextHighlightData
+		type TextHighlightData,
 		type DrawingStyle
 	} from './pdf-viewer/context.js';
 	import type { BoundingBox, DrawnBoundingBox } from './pdf-viewer/BoundingBoxLayer.js';
@@ -188,6 +188,7 @@
 		},
 		get _onTextHighlighted() {
 			return onTextHighlighted;
+		},
 		_onBoundingBoxDrawn: onBoundingBoxDrawn,
 		_onBoundingBoxClose: onBoundingBoxClose
 	});

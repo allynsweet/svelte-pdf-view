@@ -40,7 +40,12 @@
 	}: Props = $props();
 
 	const context = getPdfViewerContext();
-	const { state: viewerState, _registerRenderer, _setSrcDataForDownload, _onTextHighlighted } = context;
+	const {
+		state: viewerState,
+		_registerRenderer,
+		_setSrcDataForDownload,
+		_onTextHighlighted
+	} = context;
 
 	// Use prop src if provided, otherwise fall back to context src (via getter for reactivity)
 	let src = $derived(srcProp ?? context.src);
@@ -176,7 +181,7 @@
 			// Center the scroll position horizontally
 			if (scrollContainerEl) {
 				// Wait for next tick to ensure DOM is updated
-				await new Promise(resolve => setTimeout(resolve, 0));
+				await new Promise((resolve) => setTimeout(resolve, 0));
 
 				const scrollWidth = scrollContainerEl.scrollWidth;
 				const clientWidth = scrollContainerEl.clientWidth;
