@@ -2,7 +2,6 @@
 	import { base } from '$app/paths';
 	import {
 		PdfViewer,
-		PdfToolbar,
 		PdfRenderer,
 		type PdfSource,
 		type TextHighlightData,
@@ -317,7 +316,6 @@
 			onBoundingBoxDrawn={handleBoundingBoxDrawn}
 			onBoundingBoxClose={handleBoundingBoxClose}
 		>
-			<PdfToolbar />
 			<ScrollDemo boundingBoxes={showBoundingBoxes ? boundingBoxes : []} />
 			<PdfRenderer
 				backgroundColor="#e8e8e8"

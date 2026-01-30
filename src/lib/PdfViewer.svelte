@@ -1,6 +1,5 @@
 <script lang="ts" module>
 	// Export compound components
-	export { default as Toolbar } from './PdfToolbar.svelte';
 	export { default as Renderer } from './PdfRenderer.svelte';
 </script>
 
@@ -219,9 +218,6 @@
 		{@render children()}
 	{:else}
 		<!-- Default layout if no children provided -->
-		{#await import('./PdfToolbar.svelte') then { default: Toolbar }}
-			<Toolbar />
-		{/await}
 		{#await import('./PdfRenderer.svelte') then { default: Renderer }}
 			<Renderer {src} />
 		{/await}
