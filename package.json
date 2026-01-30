@@ -43,14 +43,8 @@
 		}
 	},
 	"peerDependencies": {
-		"@lucide/svelte": ">=0.500.0",
 		"pdfjs-dist": "^5.0.0",
 		"svelte": "^5.0.0"
-	},
-	"peerDependenciesMeta": {
-		"@lucide/svelte": {
-			"optional": true
-		}
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
