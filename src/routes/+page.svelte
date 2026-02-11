@@ -20,8 +20,8 @@
 	let tooltipPosition = $state<{ x: number; y: number } | null>(null);
 
 	// Page width control
-	let pageWidthEnabled = $state(false);
-	let pageWidthValue = $state(600);
+	let pageWidthEnabled = $state(true);
+	let pageWidthValue = $state(800);
 
 	// Bounding boxes demo
 	let showBoundingBoxes = $state(true);

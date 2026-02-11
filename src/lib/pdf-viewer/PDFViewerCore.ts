@@ -29,6 +29,8 @@ export interface PDFViewerOptions {
 	eventBus?: EventBus;
 	initialScale?: number;
 	initialRotation?: number;
+	/** Desired page width in pixels. Overrides initialScale by computing scale from first page's natural width. */
+	pageWidth?: number;
 	boundingBoxes?: BoundingBox[];
 	drawMode?: boolean;
 	drawingStyle?: DrawingStyle;
@@ -67,11 +69,15 @@ export class PDFViewerCore {
 	private drawingStyle: DrawingStyle;
 	private onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 
+	// Page width override
+	private pageWidth?: number;
+
 	constructor(options: PDFViewerOptions) {
 		this.container = options.container;
 		this.eventBus = options.eventBus ?? new EventBus();
 		this.currentScale = options.initialScale ?? DEFAULT_SCALE;
 		this.currentRotation = options.initialRotation ?? 0;
+		this.pageWidth = options.pageWidth;
 		this.boundingBoxes = options.boundingBoxes ?? [];
 		this.drawMode = options.drawMode ?? false;
 		this.drawingStyle = options.drawingStyle ?? {};
@@ -121,6 +127,17 @@ export class PDFViewerCore {
 		// Setup link service with document and viewer
 		this.linkService.setDocument(pdfDocument);
 		this.linkService.setViewer(this);
+
+		// If pageWidth is set, compute scale from first page's natural width
+		if (this.pageWidth !== undefined) {
+			const firstPage = await pdfDocument.getPage(1);
+			const naturalViewport = firstPage.getViewport({ scale: 1.0, rotation: firstPage.rotate });
+			this.currentScale = Math.max(
+				MIN_SCALE,
+				Math.min(MAX_SCALE, this.pageWidth / naturalViewport.width)
+			);
+			this.eventBus.dispatch('scalechanged', { scale: this.currentScale });
+		}
 
 		// Create page views
 		for (let i = 1; i <= numPages; i++) {

@@ -126,6 +126,8 @@ export interface PdfViewerContext {
 	_onBoundingBoxDrawn?: (box: import('./BoundingBoxLayer.js').DrawnBoundingBox) => void;
 	// For internal use - callback when bounding box close button is clicked
 	_onBoundingBoxClose?: (box: BoundingBox) => void;
+	// For internal use - desired page width in pixels
+	_pageWidth?: number;
 }
 
 export function setPdfViewerContext(ctx: PdfViewerContext): void {

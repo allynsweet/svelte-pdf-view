@@ -192,7 +192,10 @@
 			return onTextHighlighted;
 		},
 		_onBoundingBoxDrawn: onBoundingBoxDrawn,
-		_onBoundingBoxClose: onBoundingBoxClose
+		_onBoundingBoxClose: onBoundingBoxClose,
+		get _pageWidth() {
+			return pageWidth;
+		}
 	});
 
 	// Update renderer when bounding boxes change
@@ -211,13 +214,14 @@
 
 	// When pageWidth is set, compute scale to fit the desired pixel width
 	$effect(() => {
-		if (pageWidth !== undefined && rendererActions && viewerState.pageDimensions.size > 0) {
-			// Use first page's natural width to compute scale
-			const firstPage = viewerState.pageDimensions.get(1);
-			if (firstPage) {
-				const newScale = pageWidth / firstPage.width;
-				rendererActions.setScale(newScale);
-			}
+		// Read all reactive dependencies upfront to ensure Svelte tracks them
+		// (short-circuit && would skip reads and miss dependency tracking)
+		const pw = pageWidth;
+		const firstPage = viewerState.pageDimensions.get(1);
+
+		if (pw !== undefined && rendererActions && firstPage) {
+			const newScale = pw / firstPage.width;
+			rendererActions.setScale(newScale);
 		}
 	});
 </script>
