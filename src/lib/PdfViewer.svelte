@@ -39,6 +39,8 @@
 		onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 		/** Callback when a bounding box close button is clicked */
 		onBoundingBoxClose?: (box: BoundingBox) => void;
+		/** Desired page width in pixels. When set, scale is computed automatically to fit this width. */
+		pageWidth?: number;
 		/** Children (toolbar and renderer) */
 		children?: Snippet;
 	}
@@ -55,6 +57,7 @@
 		drawingStyle = {},
 		onBoundingBoxDrawn,
 		onBoundingBoxClose,
+		pageWidth,
 		children
 	}: Props = $props();
 
@@ -203,6 +206,18 @@
 	$effect(() => {
 		if (rendererActions) {
 			rendererActions.updateDrawMode(drawMode);
+		}
+	});
+
+	// When pageWidth is set, compute scale to fit the desired pixel width
+	$effect(() => {
+		if (pageWidth !== undefined && rendererActions && viewerState.pageDimensions.size > 0) {
+			// Use first page's natural width to compute scale
+			const firstPage = viewerState.pageDimensions.get(1);
+			if (firstPage) {
+				const newScale = pageWidth / firstPage.width;
+				rendererActions.setScale(newScale);
+			}
 		}
 	});
 </script>

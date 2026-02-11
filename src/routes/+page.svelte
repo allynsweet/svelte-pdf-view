@@ -19,6 +19,10 @@
 	let highlightedText = $state<string | null>(null);
 	let tooltipPosition = $state<{ x: number; y: number } | null>(null);
 
+	// Page width control
+	let pageWidthEnabled = $state(false);
+	let pageWidthValue = $state(600);
+
 	// Bounding boxes demo
 	let showBoundingBoxes = $state(true);
 	let boundingBoxes = $state<BoundingBox[]>([
@@ -277,6 +281,18 @@
 			</button>
 			<button onclick={loadInvalidPdf} class="error-btn">Test Error Handling</button>
 		</div>
+		<div class="page-width-controls">
+			<strong>Page Width:</strong>
+			<label>
+				<input type="checkbox" bind:checked={pageWidthEnabled} />
+				Set page width
+			</label>
+			{#if pageWidthEnabled}
+				<input type="range" min="200" max="1400" bind:value={pageWidthValue} />
+				<input type="number" min="200" max="1400" bind:value={pageWidthValue} class="width-input" />
+				<span>px</span>
+			{/if}
+		</div>
 		<div class="bounding-box-controls">
 			<strong>Bounding Boxes:</strong>
 			<button onclick={toggleBoundingBoxes} class="bbox-btn">
@@ -305,6 +321,7 @@
 			onerror={handlePdfError}
 			boundingBoxes={showBoundingBoxes ? boundingBoxes : []}
 			onTextHighlighted={handleTextHighlight}
+			pageWidth={pageWidthEnabled ? pageWidthValue : undefined}
 			{drawMode}
 			drawingStyle={{
 				borderColor: '#0000ff',
@@ -379,6 +396,25 @@
 
 	.buttons button:hover {
 		background: #e5e5e5;
+	}
+
+	.page-width-controls {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		margin-top: 0.5rem;
+	}
+
+	.page-width-controls input[type='range'] {
+		width: 200px;
+	}
+
+	.width-input {
+		width: 70px;
+		padding: 0.25rem 0.5rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		text-align: center;
 	}
 
 	.bounding-box-controls {
