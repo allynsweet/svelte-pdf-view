@@ -24,6 +24,8 @@ export interface NormalizedBoundingBox {
 	opacity?: number;
 	/** Optional border width in pixels */
 	borderWidth?: number;
+	/** Optional border style (default: 'solid') */
+	borderStyle?: 'solid' | 'dashed' | 'dotted';
 	/** Optional border radius in pixels */
 	borderRadius?: number;
 	/** Optional custom class name for styling */
@@ -66,6 +68,8 @@ export interface BoundingBox {
 	opacity?: number;
 	/** Optional border width in pixels */
 	borderWidth?: number;
+	/** Optional border style (default: 'solid') */
+	borderStyle?: 'solid' | 'dashed' | 'dotted';
 	/** Optional border radius in pixels */
 	borderRadius?: number;
 	/** Optional custom class name for styling */
@@ -181,8 +185,9 @@ export class BoundingBoxLayer {
 		const fillColor = box.fillColor ?? DEFAULT_STYLES.fillColor;
 		const opacity = box.opacity ?? DEFAULT_STYLES.opacity;
 		const borderWidth = box.borderWidth ?? DEFAULT_STYLES.borderWidth;
+		const borderStyle = box.borderStyle ?? 'solid';
 
-		boxDiv.style.border = `${borderWidth}px solid ${borderColor}`;
+		boxDiv.style.border = `${borderWidth}px ${borderStyle} ${borderColor}`;
 		boxDiv.style.backgroundColor = fillColor;
 		boxDiv.style.opacity = String(opacity);
 		const hasInteraction = this.onBoundingBoxClick || this.onBoundingBoxHover;
@@ -296,6 +301,7 @@ export function convertNormalizedBoundingBoxes(
 			fillColor: box.fillColor,
 			opacity: box.opacity,
 			borderWidth: box.borderWidth,
+			borderStyle: box.borderStyle,
 			borderRadius: box.borderRadius,
 			className: box.className,
 			id: box.id
