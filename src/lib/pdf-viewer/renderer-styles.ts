@@ -370,6 +370,6 @@ export const rendererStyles = `
 	position: absolute;
 	box-sizing: border-box;
 	pointer-events: none;
-	transition: opacity 0.2s ease-in-out;
+	transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 `;
