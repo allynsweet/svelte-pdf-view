@@ -50,13 +50,13 @@ export interface DrawnBoundingBox {
 export interface BoundingBox {
 	/** Page number (1-indexed) */
 	page: number;
-	/** X coordinate in PDF coordinate space (points, origin at bottom-left) */
+	/** X coordinate in points (origin at bottom-left of the visual page, after page rotation) */
 	x: number;
-	/** Y coordinate in PDF coordinate space (points, origin at bottom-left) */
+	/** Y coordinate in points (origin at bottom-left of the visual page, after page rotation) */
 	y: number;
-	/** Width in PDF coordinate space (points) */
+	/** Width in points */
 	width: number;
-	/** Height in PDF coordinate space (points) */
+	/** Height in points */
 	height: number;
 	/** Optional border color (CSS color string) */
 	borderColor?: string;
@@ -160,24 +160,14 @@ export class BoundingBoxLayer {
 			boxDiv.setAttribute('data-box-id', box.id);
 		}
 
-		// Transform PDF coordinates to viewport coordinates
-		// PDF coordinates: origin at bottom-left
-		// Viewport coordinates: origin at top-left
-		const [x1, y1, x2, y2] = this.viewport.convertToViewportRectangle([
-			box.x,
-			box.y,
-			box.x + box.width,
-			box.y + box.height
-		]);
-
-		// Calculate position and size in viewport space
-		// convertToViewportRectangle returns [x1, y1, x2, y2] where:
-		// - For 0° rotation: x1 < x2, y1 > y2 (y is flipped)
-		// - For other rotations: coordinates are transformed accordingly
-		const left = Math.min(x1, x2);
-		const top = Math.min(y1, y2);
-		const width = Math.abs(x2 - x1);
-		const height = Math.abs(y2 - y1);
+		// Transform coordinates to viewport pixels
+		// Box coordinates are in the visual coordinate space (after page rotation),
+		// with origin at bottom-left. Scale to viewport pixels and flip Y to top-origin.
+		const scale = this.viewport.scale;
+		const left = box.x * scale;
+		const top = this.viewport.height - (box.y + box.height) * scale;
+		const width = box.width * scale;
+		const height = box.height * scale;
 
 		// Apply positioning
 		boxDiv.style.position = 'absolute';

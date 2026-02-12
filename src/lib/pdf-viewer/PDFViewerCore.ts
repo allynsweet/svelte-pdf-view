@@ -172,8 +172,9 @@ export class PDFViewerCore {
 			pageView.setPdfPage(page);
 			this.pages.push(pageView);
 
-			// Emit page dimensions for each page (unscaled)
-			const unscaledViewport = page.getViewport({ scale: 1.0, rotation: 0 });
+			// Emit page dimensions for each page (unscaled, but with page rotation applied)
+			// Use page.rotate so dimensions match the visual layout (e.g., landscape pages show as landscape)
+			const unscaledViewport = page.getViewport({ scale: 1.0, rotation: page.rotate });
 			this.eventBus.dispatch('pagedimensions', {
 				pageNumber: i,
 				width: unscaledViewport.width,

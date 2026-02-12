@@ -60,7 +60,7 @@ export interface PdfViewerState {
 	scale: number;
 	rotation: number;
 
-	// Page dimensions (unscaled, in PDF points) - map of page number to dimensions
+	// Page dimensions (unscaled, in PDF points, after page rotation) - map of page number to dimensions
 	pageDimensions: Map<number, PageDimensions>;
 
 	// Search state
