@@ -45,6 +45,8 @@
 		onBoundingBoxHover?: (box: BoundingBox | null) => void;
 		/** Desired page width in pixels. When set, scale is computed automatically to fit this width. */
 		pageWidth?: number;
+		/** Current page number (1-indexed). Bindable - updates on scroll, and setting it navigates to that page. */
+		currentPage?: number;
 		/** Children (toolbar and renderer) */
 		children?: Snippet;
 	}
@@ -64,6 +66,7 @@
 		onBoundingBoxClick,
 		onBoundingBoxHover,
 		pageWidth,
+		currentPage = $bindable(1),
 		children
 	}: Props = $props();
 
@@ -217,6 +220,21 @@
 	$effect(() => {
 		if (rendererActions) {
 			rendererActions.updateDrawMode(drawMode);
+		}
+	});
+
+	// Sync currentPage: internal state → bindable prop
+	$effect(() => {
+		const page = viewerState.currentPage;
+		if (page !== currentPage) {
+			currentPage = page;
+		}
+	});
+
+	// Sync currentPage: bindable prop → navigate to page
+	$effect(() => {
+		if (currentPage && rendererActions && currentPage !== viewerState.currentPage) {
+			rendererActions.goToPage(currentPage);
 		}
 	});
 
