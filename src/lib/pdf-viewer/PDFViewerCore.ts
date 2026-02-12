@@ -35,6 +35,8 @@ export interface PDFViewerOptions {
 	drawMode?: boolean;
 	drawingStyle?: DrawingStyle;
 	onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+	onBoundingBoxClick?: (box: BoundingBox) => void;
+	onBoundingBoxHover?: (box: BoundingBox | null) => void;
 }
 
 const DEFAULT_SCALE = 1.0;
@@ -68,6 +70,8 @@ export class PDFViewerCore {
 	private drawMode: boolean;
 	private drawingStyle: DrawingStyle;
 	private onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+	private onBoundingBoxClick?: (box: BoundingBox) => void;
+	private onBoundingBoxHover?: (box: BoundingBox | null) => void;
 
 	// Page width override
 	private pageWidth?: number;
@@ -82,6 +86,8 @@ export class PDFViewerCore {
 		this.drawMode = options.drawMode ?? false;
 		this.drawingStyle = options.drawingStyle ?? {};
 		this.onBoundingBoxDrawn = options.onBoundingBoxDrawn;
+		this.onBoundingBoxClick = options.onBoundingBoxClick;
+		this.onBoundingBoxHover = options.onBoundingBoxHover;
 
 		// Create viewer div inside container
 		this.viewer = document.createElement('div');
@@ -158,7 +164,9 @@ export class PDFViewerCore {
 				boundingBoxes: this.boundingBoxes,
 				drawMode: this.drawMode,
 				drawingStyle: this.drawingStyle,
-				onBoundingBoxDrawn: this.onBoundingBoxDrawn
+				onBoundingBoxDrawn: this.onBoundingBoxDrawn,
+				onBoundingBoxClick: this.onBoundingBoxClick,
+				onBoundingBoxHover: this.onBoundingBoxHover
 			});
 
 			pageView.setPdfPage(page);

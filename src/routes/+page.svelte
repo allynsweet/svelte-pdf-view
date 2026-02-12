@@ -332,6 +332,8 @@
 			}}
 			onBoundingBoxDrawn={handleBoundingBoxDrawn}
 			onBoundingBoxClose={handleBoundingBoxClose}
+			onBoundingBoxClick={(box) => console.log('Bounding box clicked:', box)}
+			onBoundingBoxHover={(box) => console.log('Bounding box hover:', box)}
 		>
 			<ScrollDemo boundingBoxes={showBoundingBoxes ? boundingBoxes : []} />
 			<PdfRenderer

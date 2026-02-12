@@ -39,6 +39,10 @@
 		onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
 		/** Callback when a bounding box close button is clicked */
 		onBoundingBoxClose?: (box: BoundingBox) => void;
+		/** Callback when a bounding box is clicked */
+		onBoundingBoxClick?: (box: BoundingBox) => void;
+		/** Callback when a bounding box is hovered (null when mouse leaves) */
+		onBoundingBoxHover?: (box: BoundingBox | null) => void;
 		/** Desired page width in pixels. When set, scale is computed automatically to fit this width. */
 		pageWidth?: number;
 		/** Children (toolbar and renderer) */
@@ -57,6 +61,8 @@
 		drawingStyle = {},
 		onBoundingBoxDrawn,
 		onBoundingBoxClose,
+		onBoundingBoxClick,
+		onBoundingBoxHover,
 		pageWidth,
 		children
 	}: Props = $props();
@@ -195,7 +201,9 @@
 		_onBoundingBoxClose: onBoundingBoxClose,
 		get _pageWidth() {
 			return pageWidth;
-		}
+		},
+		_onBoundingBoxClick: onBoundingBoxClick,
+		_onBoundingBoxHover: onBoundingBoxHover
 	});
 
 	// Update renderer when bounding boxes change

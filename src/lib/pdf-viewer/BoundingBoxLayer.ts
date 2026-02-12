@@ -88,6 +88,10 @@ export interface BoundingBoxLayerOptions {
 	boxes: BoundingBox[];
 	/** Page number this layer belongs to */
 	pageNumber: number;
+	/** Callback when a bounding box is clicked */
+	onBoundingBoxClick?: (box: BoundingBox) => void;
+	/** Callback when a bounding box is hovered */
+	onBoundingBoxHover?: (box: BoundingBox | null) => void;
 }
 
 /** Default styles for bounding boxes */
@@ -109,9 +113,13 @@ export class BoundingBoxLayer {
 	private pageNumber: number;
 	private layerDiv: HTMLDivElement | null = null;
 	private boxElements: Map<string, HTMLDivElement> = new Map();
+	private onBoundingBoxClick?: (box: BoundingBox) => void;
+	private onBoundingBoxHover?: (box: BoundingBox | null) => void;
 
 	constructor(options: BoundingBoxLayerOptions) {
 		this.container = options.container;
+		this.onBoundingBoxClick = options.onBoundingBoxClick;
+		this.onBoundingBoxHover = options.onBoundingBoxHover;
 		this.viewport = options.viewport;
 		this.boxes = options.boxes;
 		this.pageNumber = options.pageNumber;
@@ -187,9 +195,31 @@ export class BoundingBoxLayer {
 		boxDiv.style.border = `${borderWidth}px solid ${borderColor}`;
 		boxDiv.style.backgroundColor = fillColor;
 		boxDiv.style.opacity = String(opacity);
-		boxDiv.style.pointerEvents = 'none'; // Don't interfere with PDF interaction
+		const hasInteraction = this.onBoundingBoxClick || this.onBoundingBoxHover;
+		boxDiv.style.pointerEvents = hasInteraction ? 'auto' : 'none';
 		boxDiv.style.boxSizing = 'border-box';
 		boxDiv.style.borderRadius = `${box.borderRadius || 0}px`;
+		if (hasInteraction) {
+			boxDiv.style.cursor = 'pointer';
+		}
+
+		// Add interaction event listeners
+		if (this.onBoundingBoxClick) {
+			const clickHandler = this.onBoundingBoxClick;
+			boxDiv.addEventListener('click', (e) => {
+				e.stopPropagation();
+				clickHandler(box);
+			});
+		}
+		if (this.onBoundingBoxHover) {
+			const hoverHandler = this.onBoundingBoxHover;
+			boxDiv.addEventListener('mouseenter', () => {
+				hoverHandler(box);
+			});
+			boxDiv.addEventListener('mouseleave', () => {
+				hoverHandler(null);
+			});
+		}
 
 		this.layerDiv.appendChild(boxDiv);
 

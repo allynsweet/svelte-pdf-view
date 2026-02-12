@@ -47,6 +47,8 @@ export interface PDFPageViewOptions {
 	drawMode?: boolean;
 	drawingStyle?: DrawingStyle;
 	onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+	onBoundingBoxClick?: (box: BoundingBox) => void;
+	onBoundingBoxHover?: (box: BoundingBox | null) => void;
 }
 
 export const RenderingStates = {
@@ -90,6 +92,8 @@ export class PDFPageView {
 	private drawMode: boolean;
 	private drawingStyle: DrawingStyle;
 	private onBoundingBoxDrawn?: (box: DrawnBoundingBox) => void;
+	private onBoundingBoxClick?: (box: BoundingBox) => void;
+	private onBoundingBoxHover?: (box: BoundingBox | null) => void;
 
 	public renderingState: RenderingState = RenderingStates.INITIAL;
 	private renderTask: ReturnType<PDFPageProxy['render']> | null = null;
@@ -114,6 +118,8 @@ export class PDFPageView {
 		this.drawMode = options.drawMode ?? false;
 		this.drawingStyle = options.drawingStyle ?? {};
 		this.onBoundingBoxDrawn = options.onBoundingBoxDrawn;
+		this.onBoundingBoxClick = options.onBoundingBoxClick;
+		this.onBoundingBoxHover = options.onBoundingBoxHover;
 
 		// Create page container
 		this.div = document.createElement('div');
@@ -458,7 +464,9 @@ export class PDFPageView {
 				container: this.div,
 				viewport: this.viewport,
 				boxes: this.boundingBoxes,
-				pageNumber: this.id
+				pageNumber: this.id,
+				onBoundingBoxClick: this.onBoundingBoxClick,
+				onBoundingBoxHover: this.onBoundingBoxHover
 			});
 
 			this.boundingBoxLayer.render();

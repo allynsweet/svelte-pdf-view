@@ -128,6 +128,9 @@ export interface PdfViewerContext {
 	_onBoundingBoxClose?: (box: BoundingBox) => void;
 	// For internal use - desired page width in pixels
 	_pageWidth?: number;
+	// For internal use - bounding box interaction callbacks
+	_onBoundingBoxClick?: (box: BoundingBox) => void;
+	_onBoundingBoxHover?: (box: BoundingBox | null) => void;
 }
 
 export function setPdfViewerContext(ctx: PdfViewerContext): void {

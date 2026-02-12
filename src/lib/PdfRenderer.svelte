@@ -109,7 +109,9 @@
 				boundingBoxes: boundingBoxes,
 				drawMode: context.state.drawMode,
 				drawingStyle: context.drawingStyle,
-				onBoundingBoxDrawn: context._onBoundingBoxDrawn
+				onBoundingBoxDrawn: context._onBoundingBoxDrawn,
+				onBoundingBoxClick: context._onBoundingBoxClick,
+				onBoundingBoxHover: context._onBoundingBoxHover
 			});
 
 			findController = new FindController(newViewer, eventBus);
