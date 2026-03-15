@@ -189,12 +189,12 @@ export class PDFPageView {
 		if (this.renderingState === RenderingStates.FINISHED) {
 			// Update text layer - TextLayer.update() handles both scale and rotation
 			// Rotation is applied via CSS transforms based on data-main-rotation attribute
-			if (this.textLayer && this.textLayerRendered) {
-				this.textLayerDiv!.hidden = true;
+			if (this.textLayer && this.textLayerRendered && this.textLayerDiv) {
+				this.textLayerDiv.hidden = true;
 				this.textLayer.update({
 					viewport: this.viewport
 				});
-				this.textLayerDiv!.hidden = false;
+				this.textLayerDiv.hidden = false;
 			}
 			// Update annotation layer
 			if (this.annotationLayerBuilder && this.annotationLayerRendered) {
@@ -354,10 +354,10 @@ export class PDFPageView {
 		if (!this.pdfPage) return;
 
 		// If text layer already rendered, just update it
-		if (this.textLayerRendered && this.textLayer) {
-			this.textLayerDiv!.hidden = true;
+		if (this.textLayerRendered && this.textLayer && this.textLayerDiv) {
+			this.textLayerDiv.hidden = true;
 			this.textLayer.update({ viewport: this.viewport });
-			this.textLayerDiv!.hidden = false;
+			this.textLayerDiv.hidden = false;
 			return;
 		}
 
@@ -373,7 +373,13 @@ export class PDFPageView {
 				ensurePdfJsLoaded()
 			]);
 
+			// Check if reset() was called during the await
+			if (!this.textLayerDiv || !this.pdfPage) return;
+
 			const textContent = await this.pdfPage.getTextContent();
+
+			// Check again after await - reset() may have been called
+			if (!this.textLayerDiv) return;
 
 			this.textDivs = [];
 			this.textContentItemsStr = [];
@@ -381,7 +387,7 @@ export class PDFPageView {
 			// Set text layer dimensions using PDF.js utility
 			// mustFlip=false because text layer uses raw page coordinates
 			// and rotation is handled via CSS transforms
-			setLayerDimensions(this.textLayerDiv!, this.viewport, /* mustFlip */ false);
+			setLayerDimensions(this.textLayerDiv, this.viewport, /* mustFlip */ false);
 
 			// Use PDF.js TextLayer for proper positioning
 			this.textLayer = new TextLayer({
@@ -391,6 +397,10 @@ export class PDFPageView {
 			});
 
 			await this.textLayer.render();
+
+			// Check again after render - reset() may have been called
+			if (!this.textLayerDiv) return;
+
 			this.textLayerRendered = true;
 
 			// Collect text divs and their content for search highlighting
