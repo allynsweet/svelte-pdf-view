@@ -254,9 +254,9 @@
 </script>
 
 <div class="pdf-viewer-container {className}">
-	{#if viewerState.loading}
+	{#if rendererActions && viewerState.loading}
 		<div class="pdf-loading">Loading PDF...</div>
-	{:else if viewerState.error}
+	{:else if rendererActions && viewerState.error}
 		<div class="pdf-error">Error: {viewerState.error}</div>
 	{/if}
 
