@@ -6,6 +6,29 @@ let pdfWorker: import('pdfjs-dist/legacy/build/pdf.mjs').PDFWorker | null = null
 let rawWorker: Worker | null = null;
 let initPromise: Promise<typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null> | null = null;
 
+// User-configured worker source URL
+let configuredWorkerSrc: string | URL | undefined;
+
+/**
+ * Configure the PDF.js worker URL. Call this before mounting any PdfViewer component.
+ *
+ * This is required when consuming this library as a package in Vite 8+, because
+ * `new URL(bare-specifier, import.meta.url)` does not resolve bare module specifiers
+ * from within `node_modules`.
+ *
+ * @example
+ * ```ts
+ * // Copy pdf.worker.mjs to your static/ folder, then:
+ * import { configurePdfWorker } from '@equall-ai/svelte-pdf-viewer';
+ * configurePdfWorker('/pdf.worker.mjs');
+ * ```
+ *
+ * @param workerSrc - URL or path to the PDF.js worker file (pdf.worker.mjs)
+ */
+export function configurePdfWorker(workerSrc: string | URL): void {
+	configuredWorkerSrc = workerSrc;
+}
+
 /**
  * Get the PDF.js library instance. Creates the worker on first call.
  * Subsequent calls return the cached instance.
@@ -23,10 +46,14 @@ export async function getPdfJs(): Promise<typeof import('pdfjs-dist/legacy/build
 	initPromise = (async () => {
 		pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-		// Create worker only once using import.meta.url for proper bundler resolution
-		rawWorker = new Worker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url), {
-			type: 'module'
-		});
+		// Use configured worker URL, or fall back to import.meta.url resolution
+		// (the fallback works in dev / when the library source is served directly,
+		// but may fail when consumed as a built package in Vite 8+ due to bare specifier resolution)
+		const workerUrl = configuredWorkerSrc
+			? configuredWorkerSrc
+			: new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url);
+
+		rawWorker = new Worker(workerUrl, { type: 'module' });
 		pdfWorker = new pdfjsLib.PDFWorker({
 			port: rawWorker as unknown as null
 		});

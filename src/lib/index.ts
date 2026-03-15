@@ -28,4 +28,4 @@ export type {
 export { convertNormalizedBoundingBoxes } from './pdf-viewer/BoundingBoxLayer.js';
 
 // Export PDF.js singleton utilities
-export { destroyPdfJs } from './pdf-viewer/pdfjs-singleton.js';
+export { configurePdfWorker, destroyPdfJs } from './pdf-viewer/pdfjs-singleton.js';
