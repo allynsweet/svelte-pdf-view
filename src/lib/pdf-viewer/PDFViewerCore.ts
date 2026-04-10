@@ -44,9 +44,6 @@ const MIN_SCALE = 0.1;
 const MAX_SCALE = 10.0;
 const DEFAULT_SCALE_DELTA = 0.1;
 
-// Number of pages to render around the visible ones
-const PAGES_TO_PRERENDER = 2;
-
 export class PDFViewerCore {
 	readonly container: HTMLElement;
 	readonly viewer: HTMLDivElement;
@@ -57,8 +54,12 @@ export class PDFViewerCore {
 	private currentScale: number;
 	private currentRotation: number;
 	private scrollAbortController: AbortController | null = null;
-	private renderingQueue: Set<number> = new Set();
+	private renderingQueue: number[] = [];
 	private isRendering = false;
+
+	// IntersectionObserver for visible page tracking
+	private pageObserver: IntersectionObserver | null = null;
+	private visiblePageIndices: Set<number> = new Set();
 
 	// Link service for annotation navigation
 	private linkService: SimpleLinkService;
@@ -99,7 +100,7 @@ export class PDFViewerCore {
 			eventBus: this.eventBus
 		});
 
-		// Setup scroll listener for lazy rendering
+		// Setup scroll listener for current page tracking
 		this.setupScrollListener();
 	}
 
@@ -107,20 +108,73 @@ export class PDFViewerCore {
 		this.scrollAbortController?.abort();
 		this.scrollAbortController = new AbortController();
 
-		let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
+		let rafId: number | null = null;
 
 		this.container.addEventListener(
 			'scroll',
 			() => {
-				if (scrollTimeout) {
-					clearTimeout(scrollTimeout);
+				if (rafId === null) {
+					rafId = requestAnimationFrame(() => {
+						rafId = null;
+						this.emitCurrentPage();
+					});
 				}
-				scrollTimeout = setTimeout(() => {
-					this.updateVisiblePages();
-				}, 100);
 			},
-			{ signal: this.scrollAbortController.signal }
+			{ passive: true, signal: this.scrollAbortController.signal }
 		);
+	}
+
+	private setupPageObserver(): void {
+		this.pageObserver?.disconnect();
+
+		this.pageObserver = new IntersectionObserver(
+			(entries) => {
+				let changed = false;
+				for (const entry of entries) {
+					const idx = parseInt(entry.target.getAttribute('data-page-index') ?? '', 10);
+					if (isNaN(idx)) continue;
+
+					if (entry.isIntersecting) {
+						if (!this.visiblePageIndices.has(idx)) {
+							this.visiblePageIndices.add(idx);
+							changed = true;
+						}
+					} else {
+						if (this.visiblePageIndices.has(idx)) {
+							this.visiblePageIndices.delete(idx);
+							changed = true;
+						}
+					}
+				}
+				if (changed) {
+					this.updateVisiblePages();
+				}
+			},
+			{
+				root: this.container,
+				// Pre-render pages slightly before they scroll into view
+				rootMargin: '200% 0px'
+			}
+		);
+
+		for (let i = 0; i < this.pages.length; i++) {
+			const page = this.pages[i];
+			page.div.setAttribute('data-page-index', String(i));
+			this.pageObserver.observe(page.div);
+		}
+	}
+
+	/** Emit current page number based on visible pages (for UI updates) */
+	private emitCurrentPage(): void {
+		if (this.visiblePageIndices.size === 0) return;
+		const firstVisible = Math.min(...this.visiblePageIndices);
+		this.eventBus.dispatch('updateviewarea', {
+			location: {
+				pageNumber: firstVisible + 1,
+				scale: this.currentScale,
+				rotation: this.currentRotation
+			}
+		});
 	}
 
 	async setDocument(pdfDocument: PDFDocumentProxy): Promise<void> {
@@ -184,86 +238,63 @@ export class PDFViewerCore {
 
 		this.eventBus.dispatch('pagesloaded', { pagesCount: numPages });
 
-		// Initial render of visible pages
-		this.updateVisiblePages();
-	}
-
-	private getVisiblePages(): { first: number; last: number; ids: Set<number> } {
-		const containerRect = this.container.getBoundingClientRect();
-		const containerTop = this.container.scrollTop;
-		const containerBottom = containerTop + containerRect.height;
-
-		let firstVisible = -1;
-		let lastVisible = -1;
-		const visibleIds = new Set<number>();
-
-		let currentTop = 0;
-		for (let i = 0; i < this.pages.length; i++) {
-			const page = this.pages[i];
-			const pageBottom = currentTop + page.height + 10; // 10px margin
-
-			if (pageBottom >= containerTop && currentTop <= containerBottom) {
-				if (firstVisible === -1) {
-					firstVisible = i;
-				}
-				lastVisible = i;
-				visibleIds.add(i + 1); // Page numbers are 1-indexed
-			}
-
-			currentTop = pageBottom;
-		}
-
-		return {
-			first: firstVisible === -1 ? 0 : firstVisible,
-			last: lastVisible === -1 ? 0 : lastVisible,
-			ids: visibleIds
-		};
+		// Setup observer to detect visible pages and trigger rendering
+		this.setupPageObserver();
 	}
 
 	private updateVisiblePages(): void {
 		if (!this.pdfDocument || this.pages.length === 0) return;
 
-		const visible = this.getVisiblePages();
-
-		// Calculate which pages to render (visible + buffer)
-		const startPage = Math.max(0, visible.first - PAGES_TO_PRERENDER);
-		const endPage = Math.min(this.pages.length - 1, visible.last + PAGES_TO_PRERENDER);
-
-		// Queue pages for rendering
-		for (let i = startPage; i <= endPage; i++) {
-			const page = this.pages[i];
-			if (page.renderingState === RenderingStates.INITIAL) {
-				this.renderingQueue.add(i);
+		// Queue visible pages that need rendering
+		for (const idx of this.visiblePageIndices) {
+			const page = this.pages[idx];
+			if (page && page.renderingState === RenderingStates.INITIAL) {
+				this.renderingQueue.push(idx);
 			}
 		}
 
 		this.processRenderingQueue();
-
-		this.eventBus.dispatch('updateviewarea', {
-			location: {
-				pageNumber: visible.first + 1,
-				scale: this.currentScale,
-				rotation: this.currentRotation
-			}
-		});
+		this.emitCurrentPage();
 	}
 
 	private async processRenderingQueue(): Promise<void> {
-		if (this.isRendering || this.renderingQueue.size === 0) return;
+		if (this.isRendering || this.renderingQueue.length === 0) return;
 
 		this.isRendering = true;
 
-		while (this.renderingQueue.size > 0) {
-			const pageIndex = this.renderingQueue.values().next().value as number;
-			this.renderingQueue.delete(pageIndex);
+		while (this.renderingQueue.length > 0) {
+			// Sort by proximity to the center of visible pages so nearby pages render first
+			const visibleCenter = this.getVisibleCenter();
+			this.renderingQueue.sort((a, b) => Math.abs(a - visibleCenter) - Math.abs(b - visibleCenter));
 
-			const page = this.pages[pageIndex];
-			if (page && page.renderingState === RenderingStates.INITIAL) {
-				await page.draw();
+			// Render up to 3 pages concurrently
+			const batch: Promise<void>[] = [];
+			const batchSize = Math.min(3, this.renderingQueue.length);
+			const batchIndices = this.renderingQueue.splice(0, batchSize);
+
+			for (const pageIndex of batchIndices) {
+				const page = this.pages[pageIndex];
+				if (page && page.renderingState === RenderingStates.INITIAL) {
+					batch.push(page.draw());
+				}
+			}
+
+			if (batch.length > 0) {
+				await Promise.all(batch);
 			}
 		}
 
 		this.isRendering = false;
+	}
+
+	/** Get the center index of visible pages for priority sorting */
+	private getVisibleCenter(): number {
+		if (this.visiblePageIndices.size === 0) return 0;
+		let sum = 0;
+		for (const idx of this.visiblePageIndices) {
+			sum += idx;
+		}
+		return sum / this.visiblePageIndices.size;
 	}
 
 	get scale(): number {
@@ -378,8 +409,8 @@ export class PDFViewerCore {
 	}
 
 	get currentPageNumber(): number {
-		const visible = this.getVisiblePages();
-		return visible.first + 1;
+		if (this.visiblePageIndices.size === 0) return 1;
+		return Math.min(...this.visiblePageIndices) + 1;
 	}
 
 	getPageView(pageIndex: number): PDFPageView | undefined {
@@ -416,7 +447,8 @@ export class PDFViewerCore {
 			page.destroy();
 		}
 		this.pages = [];
-		this.renderingQueue.clear();
+		this.renderingQueue.length = 0;
+		this.visiblePageIndices.clear();
 
 		// Clear viewer
 		this.viewer.innerHTML = '';
@@ -426,6 +458,8 @@ export class PDFViewerCore {
 
 	destroy(): void {
 		this.scrollAbortController?.abort();
+		this.pageObserver?.disconnect();
+		this.pageObserver = null;
 		this.cleanup();
 		this.eventBus.destroy();
 		this.viewer.remove();

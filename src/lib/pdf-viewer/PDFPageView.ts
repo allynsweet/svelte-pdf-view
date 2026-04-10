@@ -316,22 +316,23 @@ export class PDFPageView {
 			await this.renderTask.promise;
 			this.renderTask = null;
 
-			// Render text layer for search (only if not already rendered)
+			// Render text layer, annotation layer, and bounding boxes in parallel
+			// since they are independent of each other
+			const layerPromises: Promise<void>[] = [];
+
 			if (!this.textLayerRendered) {
-				await this.renderTextLayer();
+				layerPromises.push(this.renderTextLayer());
 			}
-
-			// Render annotation layer (only if not already rendered)
 			if (!this.annotationLayerRendered) {
-				await this.renderAnnotationLayer();
+				layerPromises.push(this.renderAnnotationLayer());
 			}
 
-			// Render bounding box layer (only if not already rendered)
+			await Promise.all(layerPromises);
+
+			// Bounding box layer and drawing layer are synchronous
 			if (!this.boundingBoxLayerRendered) {
 				this.renderBoundingBoxLayer();
 			}
-
-			// Initialize drawing layer if draw mode is enabled
 			if (this.drawMode) {
 				this.initDrawingLayer();
 			}

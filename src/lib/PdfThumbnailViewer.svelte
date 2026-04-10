@@ -241,13 +241,17 @@
 		const scale = width / naturalViewport.width;
 		const viewport = page.getViewport({ scale, rotation });
 
-		canvas.width = viewport.width;
-		canvas.height = viewport.height;
-		container.style.width = `${viewport.width}px`;
-		container.style.height = `${viewport.height}px`;
+		const outputScale = window.devicePixelRatio || 1;
+		canvas.width = Math.floor(viewport.width * outputScale);
+		canvas.height = Math.floor(viewport.height * outputScale);
+		canvas.style.width = `${Math.floor(viewport.width)}px`;
+		canvas.style.height = `${Math.floor(viewport.height)}px`;
+		container.style.width = `${Math.floor(viewport.width)}px`;
+		container.style.height = `${Math.floor(viewport.height)}px`;
 
 		const ctx = canvas.getContext('2d');
 		if (!ctx) return;
+		ctx.scale(outputScale, outputScale);
 
 		const renderTask = page.render({ canvasContext: ctx, viewport });
 		renderTasks.set(pageNum, renderTask);
