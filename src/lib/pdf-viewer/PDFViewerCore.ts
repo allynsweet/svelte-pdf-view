@@ -158,8 +158,8 @@ export class PDFViewerCore {
 			},
 			{
 				root: this.container,
-				// Pre-render pages slightly before they scroll into view
-				rootMargin: '200% 0px'
+				// Pre-render ~3 pages beyond the viewport in each direction
+				rootMargin: '3000px 0px'
 			}
 		);
 
