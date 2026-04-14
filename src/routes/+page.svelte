@@ -260,7 +260,7 @@
 </script>
 
 <div class="demo">
-	<h1>PDF Viewer Demo</h1>
+	<h1>PDF Viewer Demo <span class="page-counter">Page {currentPage}</span></h1>
 
 	<div class="controls">
 		<div class="url-input">
@@ -379,6 +379,18 @@
 
 	h1 {
 		margin: 0 0 1rem 0;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.page-counter {
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: #4f46e5;
+		background: #eef2ff;
+		padding: 0.25rem 0.75rem;
+		border-radius: 9999px;
 	}
 
 	.controls {

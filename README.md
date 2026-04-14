@@ -55,9 +55,7 @@ Vite 8 changed how `new URL(bare-specifier, import.meta.url)` resolves from `nod
 ```ts
 import { configurePdfWorker } from 'svelte-pdf-view';
 
-configurePdfWorker(
-	new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url)
-);
+configurePdfWorker(new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url));
 ```
 
 Call this once at app startup (e.g., in your root `+layout.svelte` or `+page.svelte`) before any PDF viewer mounts.
@@ -126,18 +124,18 @@ The main container component that provides context for toolbar and renderer.
 </PdfViewer>
 ```
 
-| Prop                | Type                                | Default  | Description                                                            |
-| ------------------- | ----------------------------------- | -------- | ---------------------------------------------------------------------- |
-| `src`               | `PdfSource`                         | required | PDF source (URL, ArrayBuffer, Uint8Array, or Blob)                     |
-| `scale`             | `number`                            | `1.0`    | Initial zoom scale                                                     |
+| Prop                | Type                                | Default  | Description                                                                    |
+| ------------------- | ----------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `src`               | `PdfSource`                         | required | PDF source (URL, ArrayBuffer, Uint8Array, or Blob)                             |
+| `scale`             | `number`                            | `1.0`    | Initial zoom scale                                                             |
 | `pageWidth`         | `number`                            | -        | Desired page width in pixels. Overrides `scale` by computing it automatically. |
-| `currentPage`       | `number`                            | `1`      | Current page (1-indexed). Bindable — updates on scroll, setting it navigates. |
-| `downloadFilename`  | `string`                            | -        | Custom filename for PDF download (default: from URL or 'document.pdf') |
-| `onerror`           | `(error: string) => void`           | -        | Callback when PDF fails to load                                        |
-| `onTextHighlighted` | `(data: TextHighlightData) => void` | -        | Callback when text is selected in the PDF                              |
-| `boundingBoxes`     | `BoundingBox[]`                     | `[]`     | Bounding boxes to render on PDF pages                                  |
-| `drawMode`          | `boolean`                           | `false`  | Enable drawing mode for creating bounding boxes                        |
-| `class`             | `string`                            | `''`     | CSS class for the container                                            |
+| `currentPage`       | `number`                            | `1`      | Current page (1-indexed). Bindable — updates on scroll, setting it navigates.  |
+| `downloadFilename`  | `string`                            | -        | Custom filename for PDF download (default: from URL or 'document.pdf')         |
+| `onerror`           | `(error: string) => void`           | -        | Callback when PDF fails to load                                                |
+| `onTextHighlighted` | `(data: TextHighlightData) => void` | -        | Callback when text is selected in the PDF                                      |
+| `boundingBoxes`     | `BoundingBox[]`                     | `[]`     | Bounding boxes to render on PDF pages                                          |
+| `drawMode`          | `boolean`                           | `false`  | Enable drawing mode for creating bounding boxes                                |
+| `class`             | `string`                            | `''`     | CSS class for the container                                                    |
 
 #### Page Navigation with `bind:currentPage`
 
@@ -148,7 +146,7 @@ The main container component that provides context for toolbar and renderer.
 	let currentPage = $state(1);
 </script>
 
-<button onclick={() => currentPage = 5}>Go to page 5</button>
+<button onclick={() => (currentPage = 5)}>Go to page 5</button>
 <p>Currently viewing page {currentPage}</p>
 
 <PdfViewer src="/document.pdf" bind:currentPage>
@@ -207,16 +205,16 @@ The PDF rendering component. Uses Shadow DOM for style isolation.
 />
 ```
 
-| Prop                       | Type                  | Default                             | Description                                                    |
-| -------------------------- | --------------------- | ----------------------------------- | -------------------------------------------------------------- |
-| `src`                      | `PdfSource`           | -                                   | PDF source (falls back to PdfViewer context if omitted)        |
-| `backgroundColor`          | `string`              | `'#e8e8e8'`                         | Background color of scroll container                           |
-| `pageShadow`               | `string`              | `'0 2px 8px rgba(0,0,0,0.12), ...'` | Box shadow for PDF pages                                       |
-| `scrollbarTrackColor`      | `string`              | `'#f1f1f1'`                         | Scrollbar track background                                     |
-| `scrollbarThumbColor`      | `string`              | `'#c1c1c1'`                         | Scrollbar thumb color                                          |
-| `scrollbarThumbHoverColor` | `string`              | `'#a1a1a1'`                         | Scrollbar thumb hover color                                    |
-| `scrollbarWidth`           | `string`              | `'10px'`                            | Scrollbar width                                                |
-| `createLoadingIndicator`   | `() => HTMLElement`   | -                                   | Factory that creates a loading indicator element for each page  |
+| Prop                       | Type                | Default                             | Description                                                    |
+| -------------------------- | ------------------- | ----------------------------------- | -------------------------------------------------------------- |
+| `src`                      | `PdfSource`         | -                                   | PDF source (falls back to PdfViewer context if omitted)        |
+| `backgroundColor`          | `string`            | `'#e8e8e8'`                         | Background color of scroll container                           |
+| `pageShadow`               | `string`            | `'0 2px 8px rgba(0,0,0,0.12), ...'` | Box shadow for PDF pages                                       |
+| `scrollbarTrackColor`      | `string`            | `'#f1f1f1'`                         | Scrollbar track background                                     |
+| `scrollbarThumbColor`      | `string`            | `'#c1c1c1'`                         | Scrollbar thumb color                                          |
+| `scrollbarThumbHoverColor` | `string`            | `'#a1a1a1'`                         | Scrollbar thumb hover color                                    |
+| `scrollbarWidth`           | `string`            | `'10px'`                            | Scrollbar width                                                |
+| `createLoadingIndicator`   | `() => HTMLElement` | -                                   | Factory that creates a loading indicator element for each page |
 
 #### Custom Page Loading Indicator
 
@@ -226,7 +224,8 @@ By default, no per-page loading indicator is shown. Pass a `createLoadingIndicat
 <PdfRenderer
 	createLoadingIndicator={() => {
 		const el = document.createElement('div');
-		el.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;color:#999;';
+		el.style.cssText =
+			'display:flex;align-items:center;justify-content:center;height:100%;color:#999;';
 		el.textContent = 'Loading page...';
 		return el;
 	}}
@@ -253,7 +252,7 @@ A virtualized thumbnail grid that renders page previews. Must be placed inside a
 				width={150}
 				columns={1}
 				gap={8}
-				onPageClick={(page) => currentPage = page}
+				onPageClick={(page) => (currentPage = page)}
 				buttonClass="thumbnail-btn"
 				containerClass="thumbnail-container"
 				labelClass="thumbnail-label"
@@ -264,19 +263,19 @@ A virtualized thumbnail grid that renders page previews. Must be placed inside a
 </PdfViewer>
 ```
 
-| Prop             | Type                       | Default | Description                                              |
-| ---------------- | -------------------------- | ------- | -------------------------------------------------------- |
-| `columns`        | `number`                   | `1`     | Number of columns in the thumbnail grid                  |
-| `width`          | `number`                   | `150`   | Width of each thumbnail in pixels                        |
-| `gap`            | `number`                   | `8`     | Gap between thumbnails in pixels                         |
-| `onPageClick`    | `(page: number) => void`   | -       | Callback when a thumbnail is clicked                     |
-| `overscan`       | `number`                   | `2`     | Number of off-screen pages to keep rendered              |
-| `startPage`      | `number`                   | `1`     | First page to show (1-indexed, inclusive)                 |
-| `endPage`        | `number`                   | -       | Last page to show (1-indexed, inclusive)                  |
-| `class`          | `string`                   | `''`    | CSS class for the grid container                         |
-| `buttonClass`    | `string`                   | `''`    | CSS class for each thumbnail button                      |
-| `containerClass` | `string`                   | `''`    | CSS class for the canvas container div                   |
-| `labelClass`     | `string`                   | `''`    | CSS class for the page number label                      |
+| Prop             | Type                     | Default | Description                                 |
+| ---------------- | ------------------------ | ------- | ------------------------------------------- |
+| `columns`        | `number`                 | `1`     | Number of columns in the thumbnail grid     |
+| `width`          | `number`                 | `150`   | Width of each thumbnail in pixels           |
+| `gap`            | `number`                 | `8`     | Gap between thumbnails in pixels            |
+| `onPageClick`    | `(page: number) => void` | -       | Callback when a thumbnail is clicked        |
+| `overscan`       | `number`                 | `2`     | Number of off-screen pages to keep rendered |
+| `startPage`      | `number`                 | `1`     | First page to show (1-indexed, inclusive)   |
+| `endPage`        | `number`                 | -       | Last page to show (1-indexed, inclusive)    |
+| `class`          | `string`                 | `''`    | CSS class for the grid container            |
+| `buttonClass`    | `string`                 | `''`    | CSS class for each thumbnail button         |
+| `containerClass` | `string`                 | `''`    | CSS class for the canvas container div      |
+| `labelClass`     | `string`                 | `''`    | CSS class for the page number label         |
 
 The thumbnail viewer uses `IntersectionObserver` for virtualization — only visible pages (plus an overscan buffer) are rendered, keeping memory usage low for large documents. Thumbnails are rendered at the correct `devicePixelRatio` for crisp display on HiDPI screens.
 
@@ -392,7 +391,12 @@ interface PdfViewerActions {
 	exitPresentationMode: () => Promise<void>;
 	updateBoundingBoxes: (boxes: BoundingBox[]) => void;
 	updateDrawMode: (enabled: boolean) => void;
-	scrollToCoordinates: (page: number, x: number, y: number, scrollBehavior?: ScrollBehavior) => void;
+	scrollToCoordinates: (
+		page: number,
+		x: number,
+		y: number,
+		scrollBehavior?: ScrollBehavior
+	) => void;
 }
 ```
 

@@ -170,13 +170,27 @@ export class PDFViewerCore {
 		}
 	}
 
-	/** Emit current page number based on visible pages (for UI updates) */
+	/** Emit current page number based on scroll position (for UI updates) */
 	private emitCurrentPage(): void {
-		if (this.visiblePageIndices.size === 0) return;
-		const firstVisible = Math.min(...this.visiblePageIndices);
+		if (this.pages.length === 0) return;
+
+		const scrollMid = this.container.scrollTop + this.container.clientHeight / 2;
+		let currentTop = 0;
+		let currentPage = 1;
+
+		for (let i = 0; i < this.pages.length; i++) {
+			const pageBottom = currentTop + this.pages[i].height + 10; // 10px gap
+			if (scrollMid < pageBottom) {
+				currentPage = i + 1;
+				break;
+			}
+			currentTop = pageBottom;
+			currentPage = i + 1;
+		}
+
 		this.eventBus.dispatch('updateviewarea', {
 			location: {
-				pageNumber: firstVisible + 1,
+				pageNumber: currentPage,
 				scale: this.currentScale,
 				rotation: this.currentRotation
 			}
@@ -416,8 +430,18 @@ export class PDFViewerCore {
 	}
 
 	get currentPageNumber(): number {
-		if (this.visiblePageIndices.size === 0) return 1;
-		return Math.min(...this.visiblePageIndices) + 1;
+		if (this.pages.length === 0) return 1;
+
+		const scrollMid = this.container.scrollTop + this.container.clientHeight / 2;
+		let currentTop = 0;
+
+		for (let i = 0; i < this.pages.length; i++) {
+			const pageBottom = currentTop + this.pages[i].height + 10;
+			if (scrollMid < pageBottom) return i + 1;
+			currentTop = pageBottom;
+		}
+
+		return this.pages.length;
 	}
 
 	getPageView(pageIndex: number): PDFPageView | undefined {
